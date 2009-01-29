@@ -1,20 +1,27 @@
+<!doctype html>
 <html>
-	<head>
-	  <!--[if IE ]>
-	    <script type="text/javascript" src="http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js"></script>
-	  <![endif]-->
-		<script src="../latest/active.packed.js" runat="server"></script>
-		<script src="test.js" runat="server"></script>
-		<script runat="server">
-		  window.onload = function(){
-  			ActiveRecord.connect(window.location.href.match(/in\_memory\=true/) ? ActiveRecord.Adapters.InMemory : null);
-  			ActiveRecord.logging = false;
-  			ActiveTest.run();
-		  };
-		</script>
-	</head>
-	<body>
-		<h1>ActiveJS Tests</h1>
-		<p>Check console for test results.</p>
-	</body>
-</html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf8" />
+    <title>Active Record ASP SQL Server Adapter Tests</title>
+<script src="../../latest/active.js" runat="server" language="javascript"></script>
+<script src="test.js" runat="server" language="javascript"></script>
+<script runat="server" language="javascript">
+// Console object for output
+var console = { 
+    log : function log(s, color) {
+        Response.write('<span ' + 
+            (color ? 'style="color:' + color + ';"' : '') + '>' +
+            (typeof s === "string" ? s : ActiveSupport.JSON.stringify(s)) +
+            '</span><br />'); 
+    } 
+};
+
+ActiveRecord.connect(ActiveRecord.Adapters.ASPSQLServer, {
+    USER : 'test',
+    PASS : 'test123',
+    NAME : 'activerecord_test'
+});
+ActiveRecord.logging = false;
+ActiveTest.run();
+</script>
+</head><body></body></html>
