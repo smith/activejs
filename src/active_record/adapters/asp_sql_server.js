@@ -51,7 +51,9 @@ Adapters.ASPSQLServer = function ASPSQLServer(db) {
         executeSQL: function executeSQL(sql) {
             var db = this.db;
             var params = Array.prototype.slice.call(arguments, 1);
+            sql = this.applyParams(sql, params);
 console.log(sql, 'blue');
+console.log(params);
             ActiveRecord.connection.log("Adapters.ASPSQLServer.executeSQL: " + sql + " [" + params.join(',') + "]");
             var response = this.recordsetToObject(db.execute(sql));
             return response;
