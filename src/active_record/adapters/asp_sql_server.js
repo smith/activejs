@@ -50,8 +50,10 @@ Adapters.ASPSQLServer = function ASPSQLServer(db) {
 
         executeSQL: function executeSQL(sql) {
             var db = this.db;
-            ActiveRecord.connection.log("Adapters.ASPSQLServer.executeSQL: " + sql + " [" + ActiveSupport.arrayFrom(arguments).slice(1).join(',') + "]");
-            var response = db.execute.apply(arguments);
+            var params = Array.prototype.slice.call(arguments, 1);
+console.log(sql, 'blue');
+            ActiveRecord.connection.log("Adapters.ASPSQLServer.executeSQL: " + sql + " [" + params.join(',') + "]");
+            var response = this.recordsetToObject(db.execute(sql));
             return response;
         },
 
@@ -84,7 +86,27 @@ Adapters.ASPSQLServer = function ASPSQLServer(db) {
                 ActiveRecord.connection.executeSQL('ROLLBACK TRANSACTION');
                 return ActiveSupport.throwError(e);
             }
+        },
+
+        /**
+         * ADO & SQL Server make parameterized queries real hard. Apply the 
+         * parameters to the SQL here, it should be good enough
+         */
+        applyParams : function applyParams(sql, params) {
+            return '';
+        },
+
+        /**
+         * Convert a recordset collection returned from a query to a 
+         * javascript object containing a rows property with the row
+         * as an object
+         */
+        recordsetToObject : function recordsetToObject(rs) {
+            var result = { rows : [] };
+
+            return result;
         }
+
     });
 };
 

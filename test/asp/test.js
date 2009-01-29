@@ -136,9 +136,8 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
     }
     else
     {
-        
+console.log('here'); 
         ActiveRecord.execute('DROP TABLE IF EXISTS schema_migrations');
-console.log('here');
         if(ActiveRecord.Migrations.Meta)
         {
             delete ActiveRecord.Migrations.Meta;
