@@ -33,7 +33,7 @@
 Adapters.ASPSQLServer = function ASPSQLServer(db) {
     this.db = db;
     ActiveSupport.extend(this,Adapters.InstanceMethods);
-    ActiveSupport.extend(this,Adapters.MySQL);
+    ActiveSupport.extend(this,Adapters.SQLServer);
     ActiveSupport.extend(this,{
         log: function log()
         {

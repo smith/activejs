@@ -246,16 +246,19 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             dependent: true
         });
         
+// No MEDIUMTEXT in SQL server. Just use TEXT
         FieldTypeTester = ActiveRecord.define('field_type_testers',{
             string_field: '',
             number_field: 0,
             default_value_field: 'DEFAULT',
             boolean_field: true,
             custom_type_field: {
-                type: 'MEDIUMTEXT'
+                //type: 'MEDIUMTEXT'
+                type: 'TEXT'
             },
             custom_type_field_with_default: {
-                type: 'MEDIUMTEXT',
+                //type: 'MEDIUMTEXT',
+                type: 'TEXT',
                 value: 'DEFAULT'
             }
         });
