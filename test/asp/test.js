@@ -136,32 +136,24 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
     }
     else
     {
-console.log('here'); 
-        ActiveRecord.execute('DROP TABLE IF EXISTS schema_migrations');
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'schema_migrations' AND xtype = 'U') DROP TABLE schema_migrations");
         if(ActiveRecord.Migrations.Meta)
         {
             delete ActiveRecord.Migrations.Meta;
         }
-        ActiveRecord.execute('DROP TABLE IF EXISTS posts');
-        ActiveRecord.execute('DROP TABLE IF EXISTS comments');
-        ActiveRecord.execute('DROP TABLE IF EXISTS users');
-        ActiveRecord.execute('DROP TABLE IF EXISTS credit_cards');
-        ActiveRecord.execute('DROP TABLE IF EXISTS string_dates');
-        ActiveRecord.execute('DROP TABLE IF EXISTS dates');
-        ActiveRecord.execute('DROP TABLE IF EXISTS articles');
-        ActiveRecord.execute('DROP TABLE IF EXISTS categories');
-        ActiveRecord.execute('DROP TABLE IF EXISTS categorizations');
-        ActiveRecord.execute('DROP TABLE IF EXISTS field_type_testers');
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'posts' AND xtype = 'U') DROP TABLE posts");
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'comments' AND xtype = 'U') DROP TABLE comments");
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'users' AND xtype = 'U') DROP TABLE users");
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'credit_cards' AND xtype = 'U') DROP TABLE credit_cards");
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'string_dates' AND xtype = 'U') DROP TABLE string_dates");
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'dates' AND xtype = 'U') DROP TABLE dates");
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'articles' AND xtype = 'U') DROP TABLE articles");
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categories' AND xtype = 'U') DROP TABLE categories");
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categorizations' AND xtype = 'U') DROP TABLE categorizations");
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE field_type_testers");
         
-        //define Posts via SQL
-        if(ActiveRecord.adapter == ActiveRecord.Adapters.JaxerMySQL)
-        {
-            ActiveRecord.execute('CREATE TABLE IF NOT EXISTS posts(id INT NOT NULL AUTO_INCREMENT, user_id INT, title VARCHAR(255), body TEXT, PRIMARY KEY(id))');
-        }
-        else
-        {
-            ActiveRecord.execute('CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY,user_id,title,body)');
-        }
+        ActiveRecord.execute("IF NOT EXISTS (SELECT name FROM sysobjects WHERE name = 'posts' AND xtype = 'U') CREATE TABLE posts (id INTEGER PRIMARY KEY,user_id INTEGER,title VARCHAR(255),body TEXT)");
+
         Post = ActiveRecord.create('posts');
         with(Post)
         {
