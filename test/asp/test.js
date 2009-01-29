@@ -44,18 +44,18 @@ var ActiveTest = {
     assert: function assert(condition,note)
     {
         ActiveTest.lastNote = note;
-        try
-        {
+        //try
+        //{
             var pass = !!(typeof(condition) === 'function' ? condition() : condition);
             ++ActiveTest[pass ? 'pass' : 'fail'];
             ActiveTest.log((pass ? 'Pass' : 'Fail') + (note ? ': ' + note : ''));
-        }
-        catch(e)
-        {
-            ++ActiveTest.error;
-            ActiveTest.log('Error' + (note ? ': ' + note : ''));
-            ActiveTest.log(e);
-        }
+        //}
+        //catch(e)
+        //{
+            //++ActiveTest.error;
+            //ActiveTest.log('Error' + (note ? ': ' + note : ''));
+            //ActiveTest.log(e);
+        //}
     },
     run: function run()
     {
@@ -78,19 +78,19 @@ var ActiveTest = {
                 {            
                     stack.push(ActiveSupport.curry(function(test_name){
                         ActiveTest.currentTestName = test_name;
-                        try
-                        {
+                        //try
+                        //{
                             ActiveTest.Tests[group_name][test_name](stack.shift());
-                        }
-                        catch(e)
-                        {
-                            ++ActiveTest.error;
-                            ActiveTest.log('Error after test' + (ActiveTest.lastNote ? ': ' + ActiveTest.lastNote : ''));
-                            ActiveTest.log(e);
-                            var output = '[' + group_name + ' Pass:' + ActiveTest.pass +',Fail:' + ActiveTest.fail + ',Error:' + ActiveTest.error + ']';
-                            ActiveTest.summary.push(output);
-                            ActiveTest.log(output);
-                        }
+                        //}
+                        //catch(e)
+                        //{
+                        //    ++ActiveTest.error;
+                        //    ActiveTest.log('Error after test' + (ActiveTest.lastNote ? ': ' + ActiveTest.lastNote : ''));
+                        //    ActiveTest.log(e);
+                        //    var output = '[' + group_name + ' Pass:' + ActiveTest.pass +',Fail:' + ActiveTest.fail + ',Error:' + ActiveTest.error + ']';
+                        //    ActiveTest.summary.push(output);
+                        //    ActiveTest.log(output);
+                        // }
                     },test_name));
                     if(ActiveTest.Tests[group_name].cleanup)
                     {
@@ -138,6 +138,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
     {
         
         ActiveRecord.execute('DROP TABLE IF EXISTS schema_migrations');
+console.log('here');
         if(ActiveRecord.Migrations.Meta)
         {
             delete ActiveRecord.Migrations.Meta;
