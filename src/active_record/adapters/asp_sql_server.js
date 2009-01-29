@@ -93,7 +93,31 @@ console.log(sql, 'blue');
          * parameters to the SQL here, it should be good enough
          */
         applyParams : function applyParams(sql, params) {
-            return '';
+            params = params || [];
+            var newSql = [];
+            var parts = [];
+            
+            // Replace all ' with '' in strings just to be safe, and quote, too
+            for (var i = 0; i < params.length; i += 1) {
+                if (typeof params[i] === "string")
+                    params[i] = "'" + params[i].replace(/\'/g, "''") + "'";
+                else if (params[i] === null)// Send a string for nulls
+                    params[i] = "NULL";
+            }
+            
+            parts = sql.split("?"); // Split the query into parts
+
+            // If there are not enough parameters, throw an error, 
+            // if there are too many, ignore the extras
+            if ((params.length + 1) < parts.length) {
+                throw new Error("SQL parameter mismatch");
+            }
+            
+            for (var i = 0; i < parts.length; i += 1) {
+                newSql.push(parts[i], params[i]);
+            }
+            
+            return newSql.join("");
         },
 
         /**
