@@ -140,6 +140,7 @@ console.log(sql, 'blue');
             if (rs.State !== adStateClosed) { // Only build if object is open.
                 fieldCount = rs.fields.count;
                 while (!rs.EOF) {
+                    o = {};
                     try {
                         for (var i = 0; i != fieldCount; i += 1) {
                             // Try to convert to string if bad value
