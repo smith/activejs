@@ -44,6 +44,26 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
         );
     },
 
+    updateEntity: function updateEntity(table, id, data) {
+        var keys = ActiveSupport.keys(data).sort();
+        var args = [];
+        var values = [];
+        var pk = "id";
+
+        for (var i = 0; i < keys.length; ++i) {
+            if (keys[i] !== pk) {
+                args.push(data[keys[i]]);
+                values.push(keys[i] + " = ?");
+            }
+        }
+        args.push(id);
+        args.unshift("UPDATE " + table + " SET " + values.join(',') + 
+            " WHERE " + pk + " = ?");
+        var response = this.executeSQL.apply(this, args);
+        this.notify('updated',table,id,data);
+        return response;
+    },
+
     // TODO: Offset
     buildSQLArguments: function buildSQLArguments(table, params, calculation) {
         var args = [];
