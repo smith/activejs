@@ -59,6 +59,11 @@ console.log(sql, 'blue');
         },
 
         getLastInsertedRowId: function getLastInsertedRowId() {
+            var id = 0;
+            try {
+                id = this.executeSQL("SELECT @@IDENTITY").rows[0][""];
+            } catch (e) {}
+            return id;
         },
 
         iterableFromResultSet: function iterableFromResultSet(result) {
@@ -128,10 +133,27 @@ console.log(sql, 'blue');
          */
         recordsetToObject : function recordsetToObject(rs) {
             var result = { rows : [] };
+            var adStateClosed = 0; // Closed state constant.
+            var o = {}; // The record object
+            var fieldCount = 0;
 
+            if (rs.State !== adStateClosed) { // Only build if object is open.
+                fieldCount = rs.fields.count;
+                while (!rs.EOF) {
+                    try {
+                        for (var i = 0; i != fieldCount; i += 1) {
+                            // Try to convert to string if bad value
+                            o[rs.fields(i).name] = rs.fields(i).value || 
+                                String(rs.fields(i).value); 
+                        }
+                    } catch (e) {}
+                    result.rows.push(o);
+                    rs.moveNext();
+                }
+                rs.close();
+            }
             return result;
         }
-
     });
 };
 
