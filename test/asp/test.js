@@ -525,9 +525,11 @@ ActiveTest.Tests.ActiveRecord.finders = function(proceed)
                     title: 'b'
                 }
             })[0].title == 'b','find({where: Hash})');
+// SQL Server does not approve of double quotes
             assert(Comment.find({
                 all: true,
-                where: 'title = "c"'
+                //where: 'title = "c"'
+                where: "title = 'c'"
             })[0].title == 'c','find({where: String})');
             assert(Comment.find({
                 first: true,
@@ -535,11 +537,15 @@ ActiveTest.Tests.ActiveRecord.finders = function(proceed)
                     title: 'b'
                 }
             }).title == 'b','find({first: true, where: Hash})');
+// SQL Server does not approve of double quotes
             assert(Comment.find({
                 first: true,
-                where: 'title = "b"'
+                //where: 'title = "b"'
+                where: "title = 'b'"
             }).title == 'b','find({first: true, where: string})');
-            b = Comment.find('SELECT * FROM comments WHERE title = ? LIMIT 1','b');
+// No LIMIT, use TOP
+            //b = Comment.find('SELECT * FROM comments WHERE title = ? LIMIT 1','b');
+            b = Comment.find('SELECT TOP 1 * FROM comments WHERE title = ?','b');
             assert(b[0] && b[0].title == 'b','find(SQL string with WHERE, LIMIT and param substituion)');
             
             assert(Comment.find().length == 3 && Comment.find({all: true}).length == 3,'find({all: true})');
