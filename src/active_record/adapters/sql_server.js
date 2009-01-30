@@ -44,6 +44,13 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
         );
     },
 
+    getDefaultColumnDefinitionFragmentFromValue: function getDefaultColumnDefinitionFragmentFromValue(value) {
+        if (typeof value === "string") { return "VARCHAR(255)"; }
+        if (typeof value === "number") { return "INT"; }
+        if (typeof value === "boolean") { return "BIT"; }
+        return "TEXT";
+    },
+
     updateEntity: function updateEntity(table, id, data) {
         var keys = ActiveSupport.keys(data).sort();
         var args = [];
