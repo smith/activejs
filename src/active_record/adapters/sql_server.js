@@ -44,6 +44,22 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
         );
     },
 
+    // TODO: Offset
+    buildSQLArguments: function buildSQLArguments(table, params, calculation) {
+        var args = [];
+        var sql = 'SELECT ' + 
+            (params.limit ? ' TOP ' + params.limit : '') +
+            (calculation ? (calculation + ' AS calculation') 
+                         : (params.select ? params.select.join(',') : '*')
+            ) + ' FROM ' + table +
+            this.buildWhereSQLFragment(params.where, args) +
+            (params.joins ? ' ' + params.joins : '') + 
+            (params.group ? ' GROUP BY ' + params.group : '') + 
+            (params.order ? ' ORDER BY ' + params.order : '')
+        args.unshift(sql);
+        return args;
+    },
+
     fieldIn: function fieldIn(field, value) {
         if (Migrations.objectIsFieldDefinition(field)) {
             field = this.getDefaultValueFromFieldDefinition(field);
