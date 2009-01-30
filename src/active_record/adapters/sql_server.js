@@ -42,5 +42,26 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
             table_name + "' AND xtype = 'U') CREATE TABLE " + table_name + " (" +
             fragments.join(",") + ")"
         );
+    },
+
+    fieldIn: function fieldIn(field, value) {
+        if (Migrations.objectIsFieldDefinition(field)) {
+            field = this.getDefaultValueFromFieldDefinition(field);
+        }
+        value = this.setValueFromFieldIfValueIsNull(field,value);
+        if (typeof field === 'string') {
+            return String(value);
+        }
+        if (typeof field === 'number') {
+            return value
+        }
+        if(typeof(field) === 'boolean') {
+            return value ? 1 : 0;
+        }
+        //array or object
+        if (typeof value === 'object' && 
+            !Migrations.objectIsFieldDefinition(field)) {
+            return ActiveSupport.JSON.stringify(value);
+        }
     }
 });
