@@ -563,7 +563,6 @@ ActiveTest.Tests.ActiveRecord.finders = function(proceed)
             var asc_find_by_sql = Comment.find('SELECT * FROM comments ORDER BY id ASC');
             var desc_find_by_sql = Comment.find('SELECT * FROM comments ORDER BY id DESC');
 
-console.log(asc_find_by_sql);
             assert(asc[0].title == asc_find_by_sql[0].title && asc[2].title == asc_find_by_sql[2].title && desc[0].title == desc_find_by_sql[0].title && desc[2].title == desc_find_by_sql[2].title,'find(sql_string)');
             assert(asc[0].title == 'a' && asc[2].title == 'c' && desc[0].title == 'c' && desc[2].title == 'a','find({all: true,order: String})');
 
