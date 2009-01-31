@@ -52,7 +52,7 @@ Adapters.ASPSQLServer = function ASPSQLServer(db) {
             var db = this.db;
             var params = Array.prototype.slice.call(arguments, 1);
             sql = this.applyParams(sql, params);
-console.log(sql, 'blue');
+console.info(sql);
             ActiveRecord.connection.log("Adapters.ASPSQLServer.executeSQL: " + sql + " [" + params.join(',') + "]");
             var response = this.recordsetToObject(db.execute(sql));
             return response;
@@ -105,10 +105,12 @@ console.log(sql, 'blue');
             
             // Replace all ' with '' in strings just to be safe, and quote, too
             for (var i = 0; i < params.length; i += 1) {
-                if (typeof params[i] === "string")
+                if (typeof params[i] === "string") {
                     params[i] = "'" + params[i].replace(/\'/g, "''") + "'";
-                else if (params[i] === null)// Send a string for nulls
+                // Send a string for null & undefined
+                } else if (params[i] === null || params[i] === undefined) {
                     params[i] = "NULL";
+                }
             }
             
             parts = sql.split("?"); // Split the query into parts
