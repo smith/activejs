@@ -87,6 +87,12 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
         return args;
     },
 
+    dropTable: function dropTable(table_name) {
+        return this.executeSQL("IF EXISTS (SELECT name " + 
+            "FROM sysobjects WHERE xtype = 'U' AND name = '" + table_name + 
+            "') DROP TABLE " + table_name);
+    },
+
     fieldIn: function fieldIn(field, value) {
         if (Migrations.objectIsFieldDefinition(field)) {
             field = this.getDefaultValueFromFieldDefinition(field);
