@@ -7,19 +7,21 @@
 <script src="test.js" runat="server" language="javascript"></script>
 <script runat="server" language="javascript">
 // Console object for output, if one is not available
-var console = { 
-    log : function log(s) {
-        Response.write(
-            (typeof s === "string" ? s : ActiveSupport.JSON.stringify(s)) +
-            '<br />'); 
-    },
-    info : function info(s) {
-        this.log('<span style="color:blue;">' + 
-            (typeof s === "string" ? s : ActiveSupport.JSON.stringify(s)) +
-            '</span>'); 
+if (typeof console !== "object") {
+    var console = { 
+        log : function log(s) {
+            Response.write(
+                (typeof s === "string" ? s : ActiveSupport.JSON.stringify(s)) +
+                '<br />'); 
+        },
+        info : function info(s) {
+            this.log('<span style="color:blue;">' + 
+                (typeof s === "string" ? s : ActiveSupport.JSON.stringify(s)) +
+                '</span>'); 
 
-    }
-};
+        }
+    };
+}
 
 ActiveRecord.connect(ActiveRecord.Adapters.ASPSQLServer, {
     USER : 'test',
