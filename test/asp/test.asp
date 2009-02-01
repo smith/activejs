@@ -6,14 +6,19 @@
 <script src="../../latest/active.js" runat="server" language="javascript"></script>
 <script src="test.js" runat="server" language="javascript"></script>
 <script runat="server" language="javascript">
-// Console object for output
+// Console object for output, if one is not available
 var console = { 
-    log : function log(s, color) {
-        Response.write('<span ' + 
-            (color ? 'style="color:' + color + ';"' : '') + '>' +
+    log : function log(s) {
+        Response.write(
             (typeof s === "string" ? s : ActiveSupport.JSON.stringify(s)) +
-            '</span><br />'); 
-    } 
+            '<br />'); 
+    },
+    info : function info(s) {
+        this.log('<span style="color:blue;">' + 
+            (typeof s === "string" ? s : ActiveSupport.JSON.stringify(s)) +
+            '</span>'); 
+
+    }
 };
 
 ActiveRecord.connect(ActiveRecord.Adapters.ASPSQLServer, {
