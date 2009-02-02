@@ -44,18 +44,18 @@ var ActiveTest = {
     assert: function assert(condition,note)
     {
         ActiveTest.lastNote = note;
-        //try
-        //{
+        try
+        {
             var pass = !!(typeof(condition) === 'function' ? condition() : condition);
             ++ActiveTest[pass ? 'pass' : 'fail'];
             ActiveTest.log((pass ? 'Pass' : 'Fail') + (note ? ': ' + note : ''));
-        //}
-        //catch(e)
-        //{
-            //++ActiveTest.error;
-            //ActiveTest.log('Error' + (note ? ': ' + note : ''));
-            //ActiveTest.log(e);
-        //}
+        }
+        catch(e)
+        {
+            ++ActiveTest.error;
+            ActiveTest.log('Error' + (note ? ': ' + note : ''));
+            ActiveTest.log(e);
+        }
     },
     run: function run()
     {
@@ -78,19 +78,19 @@ var ActiveTest = {
                 {            
                     stack.push(ActiveSupport.curry(function(test_name){
                         ActiveTest.currentTestName = test_name;
-                        //try
-                        //{
+                        try
+                        {
                             ActiveTest.Tests[group_name][test_name](stack.shift());
-                        //}
-                        //catch(e)
-                        //{
-                        //    ++ActiveTest.error;
-                        //    ActiveTest.log('Error after test' + (ActiveTest.lastNote ? ': ' + ActiveTest.lastNote : ''));
-                        //    ActiveTest.log(e);
-                        //    var output = '[' + group_name + ' Pass:' + ActiveTest.pass +',Fail:' + ActiveTest.fail + ',Error:' + ActiveTest.error + ']';
-                        //    ActiveTest.summary.push(output);
-                        //    ActiveTest.log(output);
-                        // }
+                        }
+                        catch(e)
+                        {
+                            ++ActiveTest.error;
+                            ActiveTest.log('Error after test' + (ActiveTest.lastNote ? ': ' + ActiveTest.lastNote : ''));
+                            ActiveTest.log(e);
+                            var output = '[' + group_name + ' Pass:' + ActiveTest.pass +',Fail:' + ActiveTest.fail + ',Error:' + ActiveTest.error + ']';
+                            ActiveTest.summary.push(output);
+                            ActiveTest.log(output);
+                        }
                     },test_name));
                     if(ActiveTest.Tests[group_name].cleanup)
                     {
@@ -489,7 +489,11 @@ ActiveTest.Tests.ActiveRecord.date = function(proceed)
             a.save();
 
             var new_date = a.get('updated');
+console.log("typeof new_date: " + typeof new_date);
+console.log("new_date: " + new_date);
             var saved_date = ModelWithDates.find(a.id).get('updated');
+console.log("typeof saved_date: " + typeof saved_date);
+console.log("saved_date: " + saved_date);
             if(saved_date instanceof Date){
                 saved_date = ActiveSupport.dateFormat(saved_date,'yyyy-mm-dd HH:MM:ss',true);
             }
@@ -571,20 +575,18 @@ ActiveTest.Tests.ActiveRecord.finders = function(proceed)
             assert(Comment.findByTitle('a').title == a.title && Comment.findById(a.id).id == a.id,'findByX works');
             
             //test GROUP BY
-/// Skip these for now            
             Comment.destroy('all');
             var one = Comment.create({title: 'a'});
             var two = Comment.create({title: 'a'});
             var three = Comment.create({title: 'b'});
-/*
             var result = Comment.find({
                 group: 'title',
                 order: 'id ASC'
             });
-            assert(result[0].title == 'a' && result[1].title == 'b','GROUP BY clause via params works');
-            var result = Comment.find('SELECT * FROM comments GROUP BY title ORDER BY id ASC');
-            assert(result[0].title == 'a' && result[1].title == 'b','GROUP BY clause via SQL works');
-*/
+            //assert(result[0].title == 'a' && result[1].title == 'b','GROUP BY clause via params works');
+            //var result = Comment.find('SELECT * FROM comments GROUP BY title ORDER BY id ASC');
+            //assert(result[0].title == 'a' && result[1].title == 'b','GROUP BY clause via SQL works');
+
             //test find multiple by id
             //add extra record to make sure it is not finding all
             Comment.create({

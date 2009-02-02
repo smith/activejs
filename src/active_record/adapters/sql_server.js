@@ -72,17 +72,24 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
     },
 
     // TODO: Offset
+    // FIXME: GROUP BY fails because of SQL Server being finicky. Skip it for 
+    // now
     buildSQLArguments: function buildSQLArguments(table, params, calculation) {
         var args = [];
+        var pk = "id";
         var sql = 'SELECT ' + 
             (params.limit ? ' TOP ' + params.limit : '') +
             (calculation ? (calculation + ' AS calculation') 
                          : (params.select ? params.select.join(',') : '*')
             ) + ' FROM ' + table +
             this.buildWhereSQLFragment(params.where, args) +
-            (params.joins ? ' ' + params.joins : '') + 
-            (params.group ? ' GROUP BY ' + params.group : '') + 
-            (params.order ? ' ORDER BY ' + params.order : '')
+            (params.joins ? ' ' + params.joins : '');// + 
+            //(params.group ? ' GROUP BY ' + params.group : '');
+        // Order by primary key name by default, but only if there is no
+        // caculation
+        if (!calculation) {
+            sql += ' ORDER BY ' + (params.order ? params.order : pk);
+        }
         args.unshift(sql);
         return args;
     },
