@@ -74,7 +74,7 @@ console.info(sql);
                     }
                     else { return false; }
                 } else {
-                    for(var i = 0; i < this.rows.length; ++i) {
+                    for(var i = 0; i < this.rows.length; i += 1) {
                         var row = ActiveSupport.clone(this.rows[i]);
                         iterator(row);
                     }
@@ -121,7 +121,7 @@ console.info(sql);
                 throw new Error("SQL parameter mismatch");
             }
             
-            for (var i = 0; i < parts.length; i += 1) {
+            for (i = 0; i < parts.length; i += 1) {
                 newSql.push(parts[i], params[i]);
             }
             
@@ -146,13 +146,11 @@ console.info(sql);
                 while (!rs.EOF) {
                     o = {};
                     try {
-                        for (var i = 0; i != fieldCount; i += 1) {
+                        for (var i = 0; i !== fieldCount; i += 1) {
                             value = rs.fields(i).value;
                             // If the field is a datetime, format it
                             if (rs.fields(i).type === adDBTimeStamp) {
-                                value = ActiveSupport.dateFormat(value, 
-                                    'yyyy-mm-dd HH:MM:ss'
-                                ); 
+                                value = ActiveSupport.dateFormat(value, 'yyyy-mm-dd HH:MM:ss'); 
                             }  
                             // Try to convert to string if bad value
                             o[rs.fields(i).name] = value || String(value); 
@@ -178,11 +176,15 @@ Adapters.ASPSQLServer.connect = function connect(options) {
         NAME : ""    
     };
     var connection;
-    var connString = ""
+    var connString = "";
 
     // Uppercase option keys and extend with defaults
     options = options || {};
-    for(var key in options) { options[key.toUpperCase()] = options[key]; }
+    for(var key in options) { 
+        if (options.hasOwnProperty(key)) {
+            options[key.toUpperCase()] = options[key]; 
+        }
+    }
     options = ActiveSupport.extend(defaultOptions, options);
 
     try {

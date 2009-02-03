@@ -31,17 +31,14 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
         var fragments = [];
         var pk = "id";
 
-        for (var i = 0; i < keys.length; ++i) {
+        for (var i = 0; i < keys.length; i += 1) {
             var key = keys[i];
-            fragments.push(this.getColumnDefinitionFragmentFromKeyAndColumns(
-                key,columns
-            ));
+            fragments.push(this.getColumnDefinitionFragmentFromKeyAndColumns(key,columns));
         }
         fragments.unshift(pk + " INT NOT NULL IDENTITY");
         return this.executeSQL("IF NOT EXISTS (SELECT name FROM sysobjects WHERE name = '" + 
             table_name + "' AND xtype = 'U') CREATE TABLE " + table_name + " (" +
-            fragments.join(",") + ")"
-        );
+            fragments.join(",") + ")");
     },
 
     getDefaultColumnDefinitionFragmentFromValue: function getDefaultColumnDefinitionFragmentFromValue(value) {
@@ -57,7 +54,7 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
         var values = [];
         var pk = "id";
 
-        for (var i = 0; i < keys.length; ++i) {
+        for (var i = 0; i < keys.length; i += 1) {
             if (keys[i] !== pk) {
                 args.push(data[keys[i]]);
                 values.push(keys[i] + " = ?");
@@ -79,9 +76,8 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
         var pk = "id";
         var sql = 'SELECT ' + 
             (params.limit ? ' TOP ' + params.limit : '') +
-            (calculation ? (calculation + ' AS calculation') 
-                         : (params.select ? params.select.join(',') : '*')
-            ) + ' FROM ' + table +
+            (calculation ? (calculation + ' AS calculation') : (params.select ? params.select.join(',') : '*')) + 
+            ' FROM ' + table +
             this.buildWhereSQLFragment(params.where, args) +
             (params.joins ? ' ' + params.joins : '');// + 
             //(params.group ? ' GROUP BY ' + params.group : '');
@@ -109,7 +105,7 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
             return String(value);
         }
         if (typeof field === 'number') {
-            return value
+            return value;
         }
         if(typeof(field) === 'boolean') {
             return value ? 1 : 0;
