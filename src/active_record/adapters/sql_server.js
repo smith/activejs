@@ -52,21 +52,20 @@ ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Activ
         return "TEXT";
     },
 
-    updateEntity: function updateEntity(table, id, data) {
+    updateEntity: function updateEntity(table, primary_key_name, id, data) {
         var keys = ActiveSupport.keys(data).sort();
         var args = [];
         var values = [];
-        var pk = "id";
 
         for (var i = 0; i < keys.length; i += 1) {
-            if (keys[i] !== pk) {
+            if (keys[i] !== primary_key_name) {
                 args.push(data[keys[i]]);
                 values.push(keys[i] + " = ?");
             }
         }
         args.push(id);
         args.unshift("UPDATE " + table + " SET " + values.join(',') + 
-            " WHERE " + pk + " = ?");
+            " WHERE " + primary_key_name + " = ?");
         var response = this.executeSQL.apply(this, args);
         this.notify('updated',table,id,data);
         return response;
