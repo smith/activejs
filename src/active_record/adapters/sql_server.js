@@ -78,7 +78,7 @@ ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Activ
         var args = [];
         var pk = "id";
         var sql = 'SELECT ' + 
-            (params.limit ? ' TOP ' + params.limit : '') +
+            (params.limit ? ' TOP ' + params.limit : '') + ' ' +
             (calculation ? (calculation + ' AS calculation') : (params.select ? params.select.join(',') : '*')) + 
             ' FROM ' + table +
             this.buildWhereSQLFragment(params.where, args) +
