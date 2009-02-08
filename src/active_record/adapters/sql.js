@@ -25,7 +25,9 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
-Adapters.SQL = {
+(function () {
+
+ActiveRecord.Adapters.SQL = {
     schemaLess: false,
     insertEntity: function insertEntity(table, primary_key_name, data)
     {
@@ -291,3 +293,5 @@ Adapters.SQL = {
         }
     }
 };
+
+})();

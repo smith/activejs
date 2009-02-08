@@ -25,7 +25,9 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
-Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
+(function () {
+
+ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(ActiveRecord.Adapters.SQL),{
     createTable: function createTable(table_name,columns) {
         var keys = ActiveSupport.keys(columns);
         var fragments = [];
@@ -117,3 +119,5 @@ Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
         }
     }
 });
+
+})();

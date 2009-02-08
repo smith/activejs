@@ -25,15 +25,17 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
+(function () {
+
 /**
  * Adapter for ASP configured with SQL Server.
  * @alias ActiveRecord.Adapters.ASPSQLServer
  * @property {ActiveRecord.Adapter}
  */ 
-Adapters.ASPSQLServer = function ASPSQLServer(db) {
+ActiveRecord.Adapters.ASPSQLServer = function ASPSQLServer(db) {
     this.db = db;
-    ActiveSupport.extend(this,Adapters.InstanceMethods);
-    ActiveSupport.extend(this,Adapters.SQLServer);
+    ActiveSupport.extend(this, ActiveRecord.Adapters.InstanceMethods);
+    ActiveSupport.extend(this, ActiveRecord.Adapters.SQLServer);
     ActiveSupport.extend(this,{
         log: function log()
         {
@@ -166,7 +168,7 @@ console.info(sql);
     });
 };
 
-Adapters.ASPSQLServer.connect = function connect(options) {
+ActiveRecord.Adapters.ASPSQLServer.connect = function connect(options) {
     var provider = "SQLOLEDB";
     var defaultOptions = {
         HOST : "localhost",
@@ -198,6 +200,7 @@ Adapters.ASPSQLServer.connect = function connect(options) {
 	    ";Password=" + options.PASS;
 
     connection.open(connString); 
-    return new Adapters.ASPSQLServer(connection);
+    return new ActiveRecord.Adapters.ASPSQLServer(connection);
 };
 
+})();
