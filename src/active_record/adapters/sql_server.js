@@ -101,7 +101,7 @@ ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Activ
     },
 
     fieldIn: function fieldIn(field, value) {
-        if (Migrations.objectIsFieldDefinition(field)) {
+        if (ActiveRecord.Migrations.objectIsFieldDefinition(field)) {
             field = this.getDefaultValueFromFieldDefinition(field);
         }
         value = this.setValueFromFieldIfValueIsNull(field,value);
@@ -116,7 +116,7 @@ ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Activ
         }
         //array or object
         if (typeof value === 'object' && 
-            !Migrations.objectIsFieldDefinition(field)) {
+            !ActiveRecord.Migrations.objectIsFieldDefinition(field)) {
             return ActiveSupport.JSON.stringify(value);
         }
     }

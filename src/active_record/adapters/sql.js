@@ -229,7 +229,7 @@ ActiveRecord.Adapters.SQL = {
     },
     fieldIn: function fieldIn(field, value)
     {
-        if(Migrations.objectIsFieldDefinition(field))
+        if(ActiveRecord.Migrations.objectIsFieldDefinition(field))
         {
             field = this.getDefaultValueFromFieldDefinition(field);
         }
@@ -247,14 +247,14 @@ ActiveRecord.Adapters.SQL = {
             return (new String(parseInt(new Number(value), 10))).toString();
         }
         //array or object
-        if (typeof(value) === 'object' && !Migrations.objectIsFieldDefinition(field))
+        if (typeof(value) === 'object' && !ActiveRecord.Migrations.objectIsFieldDefinition(field))
         {
             return ActiveSupport.JSON.stringify(value);
         }
     },
     fieldOut: function fieldOut(field, value)
     {
-        if(Migrations.objectIsFieldDefinition(field))
+        if(ActiveRecord.Migrations.objectIsFieldDefinition(field))
         {
             field = this.getDefaultValueFromFieldDefinition(field);
         }
