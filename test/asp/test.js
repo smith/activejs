@@ -136,6 +136,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
     }
     else
     {
+        
         ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'schema_migrations' AND xtype = 'U') DROP TABLE schema_migrations");
         if(ActiveRecord.Migrations.Meta)
         {
@@ -151,9 +152,10 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
         ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categories' AND xtype = 'U') DROP TABLE categories");
         ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categorizations' AND xtype = 'U') DROP TABLE categorizations");
         ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE field_type_testers");
+        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE singular_table_name");
         
         ActiveRecord.execute("IF NOT EXISTS (SELECT name FROM sysobjects WHERE name = 'posts' AND xtype = 'U') CREATE TABLE posts (id INTEGER IDENTITY,user_id INTEGER,title VARCHAR(255),body TEXT)");
-
+ 
         Post = ActiveRecord.create('posts');
         with(Post)
         {
@@ -166,7 +168,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
         }
 
         //define Comments via Migrations
-        Comment = ActiveRecord.define('comments',{
+        Comment = ActiveRecord.create('comments',{
             title: '',
             post_id: 0,
             user_id: 0,
@@ -181,11 +183,11 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
         Comment.belongsTo('user');
         Comment.belongsTo(Post);
 
-        CreditCard = ActiveRecord.define('credit_cards',{
+        CreditCard = ActiveRecord.create('credit_cards',{
             number: 0
         });
 
-        User = ActiveRecord.define('users',{
+        User = ActiveRecord.create('users',{
             name: '',
             password: '',
             comment_count: 0,
@@ -203,13 +205,13 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             dependent: true
         });
         
-        ModelWithStringDates = ActiveRecord.define('string_dates',{
+        ModelWithStringDates = ActiveRecord.create('string_dates',{
             name: '',
             created: '',
             updated: ''
         });
         
-        ModelWithDates = ActiveRecord.define('dates',{
+        ModelWithDates = ActiveRecord.create('dates',{
             name: '',
             created: {
                 type: 'DATETIME'
@@ -219,7 +221,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             }
         });
         
-        Article = ActiveRecord.define('articles',{
+        Article = ActiveRecord.create('articles',{
             name: ''
         });
         Article.hasMany('Categorization');
@@ -227,7 +229,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             through: 'Categorization'
         });
         
-        Category = ActiveRecord.define('categories',{
+        Category = ActiveRecord.create('categories',{
             name: ''
         });
         Category.hasMany('Categorization');
@@ -235,7 +237,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             through: 'Categorization'
         });
         
-        Categorization = ActiveRecord.define('categorizations',{
+        Categorization = ActiveRecord.create('categorizations',{
             article_id: 0,
             category_id: 0
         });
@@ -246,8 +248,8 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             dependent: true
         });
         
-// No MEDIUMTEXT in SQL server. Just use TEXT
-        FieldTypeTester = ActiveRecord.define('field_type_testers',{
+// SQL Server doesn't have MEDIUMTEXT. Just use TEXT.
+        FieldTypeTester = ActiveRecord.create('field_type_testers',{
             string_field: '',
             number_field: 0,
             default_value_field: 'DEFAULT',
@@ -257,10 +259,14 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
                 type: 'TEXT'
             },
             custom_type_field_with_default: {
-                //type: 'MEDIUMTEXT',
+                //type: 'MEDIUMTEXT'
                 type: 'TEXT',
                 value: 'DEFAULT'
             }
+        });
+        
+        SingularTableName = ActiveRecord.create('singular_table_name',{
+            string_field: ''
         });
         
         if(proceed)
@@ -294,6 +300,10 @@ ActiveTest.Tests.ActiveRecord.basic = function(proceed)
         }
         else
         {
+            //ensure singular table name model can write / read
+            var a = SingularTableName.create({string_field: 'test'});
+            assert(SingularTableName.find(a.id).string_field == 'test','Singular table names supported.');
+            
             //Comment is defined by ActiveRecord, Post is defined by SQL
             var a = new Comment({
                 title: 'a',
@@ -487,13 +497,8 @@ ActiveTest.Tests.ActiveRecord.date = function(proceed)
             var old_date = a.get('updated');
             a.set('updated','');
             a.save();
-
             var new_date = a.get('updated');
-console.log("typeof new_date: " + typeof new_date);
-console.log("new_date: " + new_date);
             var saved_date = ModelWithDates.find(a.id).get('updated');
-console.log("typeof saved_date: " + typeof saved_date);
-console.log("saved_date: " + saved_date);
             if(saved_date instanceof Date){
                 saved_date = ActiveSupport.dateFormat(saved_date,'yyyy-mm-dd HH:MM:ss',true);
             }
@@ -548,7 +553,7 @@ ActiveTest.Tests.ActiveRecord.finders = function(proceed)
                 //where: 'title = "b"'
                 where: "title = 'b'"
             }).title == 'b','find({first: true, where: string})');
-// No LIMIT, use TOP
+// Use TOP instead of LIMIT
             //b = Comment.find('SELECT * FROM comments WHERE title = ? LIMIT 1','b');
             b = Comment.find('SELECT TOP 1 * FROM comments WHERE title = ?','b');
             assert(b[0] && b[0].title == 'b','find(SQL string with WHERE, LIMIT and param substituion)');
@@ -583,10 +588,10 @@ ActiveTest.Tests.ActiveRecord.finders = function(proceed)
                 group: 'title',
                 order: 'id ASC'
             });
-            //assert(result[0].title == 'a' && result[1].title == 'b','GROUP BY clause via params works');
-            //var result = Comment.find('SELECT * FROM comments GROUP BY title ORDER BY id ASC');
-            //assert(result[0].title == 'a' && result[1].title == 'b','GROUP BY clause via SQL works');
-
+            assert(result[0].title == 'a' && result[1].title == 'b','GROUP BY clause via params works');
+            var result = Comment.find('SELECT * FROM comments GROUP BY title ORDER BY id ASC');
+            assert(result[0].title == 'a' && result[1].title == 'b','GROUP BY clause via SQL works');
+            
             //test find multiple by id
             //add extra record to make sure it is not finding all
             Comment.create({
