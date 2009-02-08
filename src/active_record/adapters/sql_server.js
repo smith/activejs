@@ -31,13 +31,15 @@ ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Activ
     createTable: function createTable(table_name,columns) {
         var keys = ActiveSupport.keys(columns);
         var fragments = [];
-        var pk = "id";
 
         for (var i = 0; i < keys.length; i += 1) {
             var key = keys[i];
-            fragments.push(this.getColumnDefinitionFragmentFromKeyAndColumns(key,columns));
+            if (columns[key].primaryKey) {
+                fragments.unshift(key + " INT NOT NULL IDENTITY");
+            } else {
+                fragments.push(this.getColumnDefinitionFragmentFromKeyAndColumns(key,columns));
+            }
         }
-        fragments.unshift(pk + " INT NOT NULL IDENTITY");
         return this.executeSQL("IF NOT EXISTS (SELECT name FROM sysobjects WHERE name = '" + 
             table_name + "' AND xtype = 'U') CREATE TABLE " + table_name + " (" +
             fragments.join(",") + ")");
