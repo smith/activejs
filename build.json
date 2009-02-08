@@ -183,7 +183,21 @@
             "latest/active_record.jaxer.js"
         ]
     },
-    
+
+    {
+        "name": "active_record_asp",
+        "output": "latest/active_record.asp.js",
+        "files": [
+            "license.txt",
+            "src/active_support.js",
+            "src/active_event.js",
+            "include_active_record",
+            "src/active_record/adapters/sql.js",
+            "src/active_record/adapters/sql_server.js",
+            "src/active_record/adapters/asp_sql_server.js"
+        ]
+    },
+   
     {
         "name": "active_record_air",
         "output": "latest/active_record.air.js",
