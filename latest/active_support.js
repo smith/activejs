@@ -160,6 +160,15 @@ ActiveSupport = {
         return results;
     },
     /**
+     * @alias ActiveSupport.isArray
+     * @param {mixed} object
+     * @return {Boolean}
+     */
+    isArray: function isArray(object)
+    {
+        return object && typeof(object) == 'object' && 'length' in object && 'splice' in object && 'join' in object;
+    },
+    /**
      * Emulates Array.indexOf for implementations that do not support it.
      * @alias ActiveSupport.indexOf
      * @param {Array} array
@@ -646,6 +655,8 @@ ActiveSupport = {
      * MIT license
      * Includes enhancements by Scott Trenda <scott.trenda.net> and Kris Kowal <cixar.com/~kris.kowal/>
      *
+     * http://blog.stevenlevithan.com/archives/date-time-format
+     * 
      * Accepts a date, a mask, or a date and a mask.
      * Returns a formatted version of the given date.
      * The date defaults to the current date/time.
@@ -653,11 +664,19 @@ ActiveSupport = {
      */
      
     /**
+     * See: http://blog.stevenlevithan.com/archives/date-time-format
+     * 
+     * If convert_to_local_time is true the Date object will be assume to be GMT
+     * and be converted from GMT to the local time. Local time will be the local
+     * time of the server if running server side, or local time of the client
+     * side if running in the browser.
      * @alias ActiveSupport.dateFormat
      * @param {Date} date
      * @param {String} format
-     * @param {Boolean} utc
+     * @param {Boolean} [convert_to_local_time]
      * @return {String}
+     * @example
+     *     ActiveSupport.dateFormat('yyyy-mm-dd HH:MM:ss');
      */
     dateFormat: function date_format_wrapper()
     {
@@ -818,7 +837,7 @@ ActiveSupport = {
                 {
                     for(var i = 0; i < value.length; ++i)
                     {
-                        response += wrap_value(ActiveSupport.Inflector.singularize(key_name),value[i],indent + 1);
+                        response += wrap_value(ActiveSupport.Inflector.singularize(key_name) || key_name,value[i],indent + 1);
                     }
                 }
                 else
@@ -1056,7 +1075,7 @@ ActiveSupport = {
                 partial,
                 value = holder[key];
             if (value && typeof value === 'object' &&
-                    typeof value.toJSON === 'function') {
+                    typeof value.toJSON === 'function' && !ActiveSupport.isArray(value)) {
                 value = value.toJSON(key);
             }
             if (typeof rep === 'function') {

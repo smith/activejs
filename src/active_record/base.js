@@ -31,16 +31,20 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
      * @alias ActiveRecord.Instance.set
      * @param {String} key
      * @param {mixed} value
+     * @param {Boolean} surpress_notifications Defaults to false
      * @return {mixed} the value that was set
      */
-    set: function set(key, value)
+    set: function set(key, value, surpress_notifications)
     {
         if (typeof(this[key]) !== "function")
         {
             this[key] = value;
         }
         this._object[key] = value;
-        this.notify('set',key,value);
+        if(!surpress_notifications)
+        {
+            this.notify('set',key,value);
+        }
     },
     /**
      * Get a given key on the object. If your field name is a reserved word, or the name of a method (save, updateAttribute, etc) you must use the get() method to access the property. For convenience non reserved words (title, user_id, etc) can be accessed directly (instance.key_name)
@@ -68,12 +72,12 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
      */
     keys: function keys()
     {
-        var keysArray = [];
+        var keys_array = [];
         for(var key_name in this._object)
         {
-            keysArray.push(key_name);
+            keys_array.push(key_name);
         }
-        return keysArray;
+        return keys_array;
     },
     /**
      * Returns an array of the column values that the instance contains.
@@ -82,12 +86,12 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
      */
     values: function values()
     {
-        var valuesArray = [];
+        var values_array = [];
         for(var key_name in this._object)
         {
-            valuesArray.push(this._object[key_name]);
+            values_array.push(this._object[key_name]);
         }
-        return valuesArray;
+        return values_array;
     },
     /**
      * Sets a given key on the object and immediately persists that change to the database triggering any callbacks or validation .
@@ -120,11 +124,11 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
      */
     reload: function reload()
     {
-        if (!this.get('id'))
+        if (!this.get(this.constructor.primaryKeyName))
         {
             return false;
         }
-        var record = this.constructor.find(this.get('id'));
+        var record = this.constructor.find(this.get(this.constructor.primaryKeyName));
         if (!record)
         {
             return false;
@@ -149,24 +153,50 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
         {
             return false;
         }
+        //apply field in conversions
+        for (var key in this.constructor.fields)
+        {
+            if(!this.constructor.fields[key].primaryKey)
+            {
+                //third param is to surpress observers
+                this.set(key,ActiveRecord.connection.fieldIn(this.constructor.fields[key],this.get(key)),true);
+            }
+        }
         if (this.notify('beforeSave') === false)
         {
             return false;
         }
-        if (!this.get('id'))
+        if ('updated' in this._object)
         {
-            if(this.notify('beforeCreate') === false)
+            this.set('updated',ActiveSupport.dateFormat('yyyy-mm-dd HH:MM:ss'));
+        }
+        if (!this.get(this.constructor.primaryKeyName))
+        {
+            if (this.notify('beforeCreate') === false)
             {
                 return false;
             }
-            ActiveRecord.connection.insertEntity(this.tableName, this.toObject());
-            this.set('id', ActiveRecord.connection.getLastInsertedRowId());
+            if ('created' in this._object)
+            {
+                this.set('created',ActiveSupport.dateFormat('yyyy-mm-dd HH:MM:ss'));
+            }
+            ActiveRecord.connection.insertEntity(this.tableName, this.constructor.primaryKeyName, this.toObject());
+            this.set(this.constructor.primaryKeyName, ActiveRecord.connection.getLastInsertedRowId());
             Synchronization.triggerSynchronizationNotifications(this,'afterCreate');
             this.notify('afterCreate');
         }
         else
         {
-            ActiveRecord.connection.updateEntity(this.tableName, this.get('id'), this.toObject());
+            ActiveRecord.connection.updateEntity(this.tableName, this.constructor.primaryKeyName, this.get(this.constructor.primaryKeyName), this.toObject());
+        }
+        //apply field out conversions
+        for (var key in this.constructor.fields)
+        {
+            if(!this.constructor.fields[key].primaryKey)
+            {
+                //third param is to surpress observers
+                this.set(key,ActiveRecord.connection.fieldOut(this.constructor.fields[key],this.get(key)),true);
+            }
         }
         Synchronization.triggerSynchronizationNotifications(this,'afterSave');
         this.notify('afterSave');
@@ -179,7 +209,7 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
      */
     destroy: function destroy()
     {
-        if (!this.get('id'))
+        if (!this.get(this.constructor.primaryKeyName))
         {
             return false;
         }
@@ -187,7 +217,7 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
         {
             return false;
         }
-        ActiveRecord.connection.deleteEntity(this.tableName,this.get('id'));
+        ActiveRecord.connection.deleteEntity(this.tableName,this.constructor.primaryKeyName,this.get(this.constructor.primaryKeyName));
         Synchronization.triggerSynchronizationNotifications(this,'afterDestroy');
         if (this.notify('afterDestroy') === false)
         {
@@ -287,7 +317,7 @@ ActiveSupport.extend(ActiveRecord.ClassMethods,{
             else
             {
                 //single id
-                result = ActiveRecord.connection.findEntitiesById(this.tableName,[params]);
+                result = ActiveRecord.connection.findEntitiesById(this.tableName,this.primaryKeyName,[params]);
             }
             if (result && result.iterate && result.iterate(0))
             {
@@ -310,7 +340,7 @@ ActiveSupport.extend(ActiveRecord.ClassMethods,{
             {
                 //find by multiple ids
                 var ids = ((typeof(params) == 'number' || typeof(params) == 'string') && arguments.length > 1) ? ActiveSupport.arrayFrom(arguments) : params;
-                result = ActiveRecord.connection.findEntitiesById(this.tableName,ids);
+                result = ActiveRecord.connection.findEntitiesById(this.tableName,this.primaryKeyName,ids);
             }
             else
             {
@@ -422,6 +452,10 @@ ActiveSupport.extend(ActiveRecord.ClassMethods,{
         else
         {
             var record = this.find(id);
+            if(!record)
+            {
+                return false;
+            }
             record.updateAttributes(attributes);
             return record;
         }

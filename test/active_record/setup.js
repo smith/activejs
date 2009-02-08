@@ -52,6 +52,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
         ActiveRecord.execute('DROP TABLE IF EXISTS categories');
         ActiveRecord.execute('DROP TABLE IF EXISTS categorizations');
         ActiveRecord.execute('DROP TABLE IF EXISTS field_type_testers');
+        ActiveRecord.execute('DROP TABLE IF EXISTS singular_table_name');
         
         //define Posts via SQL
         if(ActiveRecord.adapter == ActiveRecord.Adapters.JaxerMySQL)
@@ -74,7 +75,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
         }
 
         //define Comments via Migrations
-        Comment = ActiveRecord.define('comments',{
+        Comment = ActiveRecord.create('comments',{
             title: '',
             post_id: 0,
             user_id: 0,
@@ -89,11 +90,11 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
         Comment.belongsTo('user');
         Comment.belongsTo(Post);
 
-        CreditCard = ActiveRecord.define('credit_cards',{
+        CreditCard = ActiveRecord.create('credit_cards',{
             number: 0
         });
 
-        User = ActiveRecord.define('users',{
+        User = ActiveRecord.create('users',{
             name: '',
             password: '',
             comment_count: 0,
@@ -111,13 +112,13 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             dependent: true
         });
         
-        ModelWithStringDates = ActiveRecord.define('string_dates',{
+        ModelWithStringDates = ActiveRecord.create('string_dates',{
             name: '',
             created: '',
             updated: ''
         });
         
-        ModelWithDates = ActiveRecord.define('dates',{
+        ModelWithDates = ActiveRecord.create('dates',{
             name: '',
             created: {
                 type: 'DATETIME'
@@ -127,7 +128,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             }
         });
         
-        Article = ActiveRecord.define('articles',{
+        Article = ActiveRecord.create('articles',{
             name: ''
         });
         Article.hasMany('Categorization');
@@ -135,7 +136,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             through: 'Categorization'
         });
         
-        Category = ActiveRecord.define('categories',{
+        Category = ActiveRecord.create('categories',{
             name: ''
         });
         Category.hasMany('Categorization');
@@ -143,7 +144,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             through: 'Categorization'
         });
         
-        Categorization = ActiveRecord.define('categorizations',{
+        Categorization = ActiveRecord.create('categorizations',{
             article_id: 0,
             category_id: 0
         });
@@ -154,7 +155,7 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
             dependent: true
         });
         
-        FieldTypeTester = ActiveRecord.define('field_type_testers',{
+        FieldTypeTester = ActiveRecord.create('field_type_testers',{
             string_field: '',
             number_field: 0,
             default_value_field: 'DEFAULT',
@@ -166,6 +167,10 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
                 type: 'MEDIUMTEXT',
                 value: 'DEFAULT'
             }
+        });
+        
+        SingularTableName = ActiveRecord.create('singular_table_name',{
+            string_field: ''
         });
         
         if(proceed)

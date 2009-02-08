@@ -5526,71 +5526,69 @@ Synchronization.spliceArgumentsFromResultSetDiff = function spliceArgumentsFromR
 ActiveRecord.Synchronization = Synchronization;
 
 })();
+ 
+(function(){
+
+ActiveRecord.Adapters.MySQL = ActiveSupport.extend(ActiveSupport.clone(ActiveRecord.Adapters.SQL),{
+    createTable: function createTable(table_name,columns)
+    {
+        var keys = ActiveSupport.keys(columns);
+        var fragments = [];
+        for (var i = 0; i < keys.length; ++i)
+        {
+            var key = keys[i];
+            fragments.push(this.getColumnDefinitionFragmentFromKeyAndColumns(key,columns));
+        }
+        fragments.unshift('id INT NOT NULL AUTO_INCREMENT');
+        fragments.push('PRIMARY KEY(id)');
+        return this.executeSQL('CREATE TABLE IF NOT EXISTS ' + table_name + ' (' + fragments.join(',') + ') ENGINE=InnoDB');
+    },
+    dropColumn: function dropColumn(table_column,column_name)
+    {
+        return this.executeSQL('ALTER TABLE ' + table_name + ' DROP COLUMN ' + key);
+    }
+});
+
+})();
 
 (function(){
 
 /**
- * Adapter for browsers supporting a SQL implementation (Gears, HTML5).
- * @alias ActiveRecord.Adapters.Gears
+ * Adapter for Jaxer configured with SQLite
+ * @alias ActiveRecord.Adapters.JaxerSQLite
  * @property {ActiveRecord.Adapter}
- */
-ActiveRecord.Adapters.Gears = function Gears(db){
-    this.db = db;
+ */ 
+ActiveRecord.Adapters.JaxerSQLite = function JaxerSQLite(){
     ActiveSupport.extend(this,ActiveRecord.Adapters.InstanceMethods);
     ActiveSupport.extend(this,ActiveRecord.Adapters.SQLite);
     ActiveSupport.extend(this,{
         log: function log()
         {
-            if(!ActiveRecord.logging)
+            if (!ActiveRecord.logging)
             {
                 return;
             }
-            if(arguments[0])
+            if (arguments[0])
             {
                 arguments[0] = 'ActiveRecord: ' + arguments[0];
             }
-            return ActiveSupport.log.apply(ActiveSupport,arguments || []);
+            return ActiveSupport.log.apply(ActiveSupport,arguments || {});
         },
         executeSQL: function executeSQL(sql)
         {
-            var args = ActiveSupport.arrayFrom(arguments);
-            var proceed = null;
-            if(typeof(args[args.length - 1]) === 'function')
-            {
-                proceed = args.pop();
-            }
-            ActiveRecord.connection.log("Adapters.Gears.executeSQL: " + sql + " [" + args.slice(1).join(',') + "]");
-            var response = ActiveRecord.connection.db.execute(sql,args.slice(1));
-            if(proceed)
-            {
-                proceed(response);
-            }
+            ActiveRecord.connection.log("Adapters.JaxerSQLite.executeSQL: " + sql + " [" + ActiveSupport.arrayFrom(arguments).slice(1).join(',') + "]");
+            var response = Jaxer.DB.execute.apply(Jaxer.DB.connection, arguments);
             return response;
         },
         getLastInsertedRowId: function getLastInsertedRowId()
         {
-            return this.db.lastInsertRowId;
+            return Jaxer.DB.lastInsertId;
         },
         iterableFromResultSet: function iterableFromResultSet(result)
         {
-            var response = {
-                rows: []
-            };
-            var count = result.fieldCount();
-            while(result.isValidRow())
+            result.iterate = function iterate(iterator)
             {
-                var row = {};
-                for(var i = 0; i < count; ++i)
-                {
-                    row[result.fieldName(i)] = result.field(i);
-                }
-                response.rows.push(row);
-                result.next();
-            }
-            result.close();
-            response.iterate = function(iterator)
-            {
-                if(typeof(iterator) === 'number')
+                if (typeof(iterator) === 'number')
                 {
                     if (this.rows[iterator])
                     {
@@ -5603,27 +5601,15 @@ ActiveRecord.Adapters.Gears = function Gears(db){
                 }
                 else
                 {
-                    for(var i = 0; i < this.rows.length; ++i)
+                    for (var i = 0; i < this.rows.length; ++i)
                     {
                         var row = ActiveSupport.clone(this.rows[i]);
+                        delete row['$values'];
                         iterator(row);
                     }
                 }
             };
-            return response;
-        },
-        fieldListFromTable: function(table_name)
-        {
-            var response = {};
-            var description = ActiveRecord.connection.iterableFromResultSet(ActiveRecord.connection.executeSQL('SELECT * FROM sqlite_master WHERE tbl_name = "' + table_name + '"')).iterate(0);
-            var columns = description.sql.match(new RegExp('CREATE[\s]+TABLE[\s]+' + table_name + '[\s]+(\([^\)]+)'));
-            var parts = columns.split(',');
-            for(var i = 0; i < parts.length; ++i)
-            {
-                //second half of the statement should instead return the type that it is
-                response[parts[i].replace(/(^\s+|\s+$)/g,'')] = parts[i].replace(/^\w+\s?/,'');
-            }
-            return response;
+            return result;
         },
         transaction: function transaction(proceed)
         {
@@ -5641,66 +5627,111 @@ ActiveRecord.Adapters.Gears = function Gears(db){
         }
     });
 };
-ActiveRecord.Adapters.Gears.DatabaseUnavailableError = 'ActiveRecord.Adapters.Gears could not find a Google Gears database to connect to.';
-ActiveRecord.Adapters.Gears.connect = function connect(name, version, display_name, size)
+ActiveRecord.Adapters.JaxerSQLite.connect = function connect(path)
 {
-    var global_context = ActiveSupport.getGlobalContext();
-    var db = null;
-    
-    if(!(global_context.google && google.gears))
-    {
-        var gears_factory = null;
-        if('GearsFactory' in global_context)
+    Jaxer.DB.connection = new Jaxer.DB.SQLite.createDB({
+        PATH: Jaxer.Dir.resolve(path || 'ActiveRecord.sqlite')
+    });
+    return new ActiveRecord.Adapters.JaxerSQLite();
+};
+
+})();
+ 
+(function(){
+  
+/**
+ * Adapter for Jaxer configured with MySQL.
+ * @alias ActiveRecord.Adapters.JaxerMySQL
+ * @property {ActiveRecord.Adapter}
+ */ 
+ActiveRecord.Adapters.JaxerMySQL = function JaxerMySQL(){
+    ActiveSupport.extend(this,ActiveRecord.Adapters.InstanceMethods);
+    ActiveSupport.extend(this,ActiveRecord.Adapters.MySQL);
+    ActiveSupport.extend(this,{
+        log: function log()
         {
-            gears_factory = new GearsFactory();
-        }
-        else if('ActiveXObject' in global_context)
+            if (!ActiveRecord.logging)
+            {
+                return;
+            }
+            if (arguments[0])
+            {
+                arguments[0] = 'ActiveRecord: ' + arguments[0];
+            }
+            return ActiveSupport.log(ActiveSupport,arguments || []);
+        },
+        executeSQL: function executeSQL(sql)
+        {
+            ActiveRecord.connection.log("Adapters.JaxerMySQL.executeSQL: " + sql + " [" + ActiveSupport.arrayFrom(arguments).slice(1).join(',') + "]");
+            var response = Jaxer.DB.execute.apply(Jaxer.DB.connection, arguments);
+            return response;
+        },
+        getLastInsertedRowId: function getLastInsertedRowId()
+        {
+            return Jaxer.DB.lastInsertId;
+        },
+        iterableFromResultSet: function iterableFromResultSet(result)
+        {
+            result.iterate = function iterate(iterator)
+            {
+                if (typeof(iterator) === 'number')
+                {
+                    if (this.rows[iterator])
+                    {
+                        return ActiveSupport.clone(this.rows[iterator]);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    for(var i = 0; i < this.rows.length; ++i)
+                    {
+                        var row = ActiveSupport.clone(this.rows[i]);
+                        delete row['$values'];
+                        iterator(row);
+                    }
+                }
+            };
+            return result;
+        },
+        transaction: function transaction(proceed)
         {
             try
             {
-                gears_factory = new ActiveXObject('Gears.Factory');
-                if(gears_factory.getBuildInfo().indexOf('ie_mobile') !== -1)
-                {
-                    gears_factory.privateSetGlobalObject(this);
-                }
+                ActiveRecord.connection.executeSQL('BEGIN');
+                proceed();
+                ActiveRecord.connection.executeSQL('COMMIT');
             }
             catch(e)
             {
-                return ActiveSupport.throwError(ActiveRecord.Adapters.Gears.DatabaseUnavailableError);
+                ActiveRecord.connection.executeSQL('ROLLBACK');
+                return ActiveSupport.throwError(e);
             }
         }
-        else if(('mimeTypes' in navigator) && ('application/x-googlegears' in navigator.mimeTypes))
-        {
-            gears_factory = ActiveSupport.getGlobalContext().document.createElement("object");
-            gears_factory.style.display = "none";
-            gears_factory.width = 0;
-            gears_factory.height = 0;
-            gears_factory.type = "application/x-googlegears";
-            ActiveSupport.getGlobalContext().document.documentElement.appendChild(gears_factory);
-        }
-        
-        if(!gears_factory)
-        {
-            return ActiveSupport.throwError(ActiveRecord.Adapters.Gears.DatabaseUnavailableError);
-        }
-        
-        if(!('google' in global_context))
-        {
-            google = {};
-        }
-        
-        if(!('gears' in google))
-        {
-            google.gears = {
-                factory: gears_factory
-            };
-        }
-    }
+    });
+};
 
-    db = google.gears.factory.create('beta.database');
-    db.open(name || 'ActiveRecord');
-        
-    return new ActiveRecord.Adapters.Gears(db);
+ActiveRecord.Adapters.JaxerMySQL.connect = function connect(options)
+{
+    if(!options)
+    {
+        options = {};
+    }
+    for(var key in options)
+    {
+        options[key.toUpperCase()] = options[key];
+    }
+    Jaxer.DB.connection = new Jaxer.DB.MySQL.Connection(ActiveSupport.extend({
+        HOST: 'localhost',
+        PORT: 3306,
+        USER: 'root',
+        PASS: '',
+        NAME: 'jaxer'
+    },options));
+    return new ActiveRecord.Adapters.JaxerMySQL();
 };
 
 })();
