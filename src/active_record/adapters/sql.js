@@ -229,7 +229,11 @@ ActiveRecord.Adapters.SQL = {
     },
     fieldIn: function fieldIn(field, value)
     {
-        if(ActiveRecord.Migrations.objectIsFieldDefinition(field))
+        if(value && value instanceof Date)
+        {
+            return ActiveSupport.dateFormat(value,'yyyy-mm-dd HH:MM:ss',true);
+        }
+        if(Migrations.objectIsFieldDefinition(field))
         {
             field = this.getDefaultValueFromFieldDefinition(field);
         }
