@@ -331,5 +331,28 @@
             "test/active_controller/setup.js",
             "test/active_controller/scoping.js"
         ]
+    },
+
+    {
+        "name": "tests_asp",
+        "output": "test/asp/test.js",
+        "files": [
+            "license.txt",
+            "src/active_test.js",
+            "test/active_record/setup.js",
+            "test/active_record/teardown.js",
+            "test/active_record/sql_server/basic.js",
+            "test/active_record/callbacks.js",
+            "test/active_record/cleanup.js",
+            "test/active_record/date.js",
+            "test/active_record/sql_server/finders.js",
+            "test/active_record/migrations.js",
+            "test/active_record/relationships.js",
+            "test/active_record/serialization.js",
+            "test/active_record/synchronization.js",
+            "test/active_record/transactions.js",
+            "test/active_record/validations.js",
+            "test/active_record/parser.js"
+        ]
     }
 ]
