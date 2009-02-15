@@ -44,18 +44,18 @@ var ActiveTest = {
     assert: function assert(condition,note)
     {
         ActiveTest.lastNote = note;
-        //try
-        //{
+        try
+        {
             var pass = !!(typeof(condition) === 'function' ? condition() : condition);
             ++ActiveTest[pass ? 'pass' : 'fail'];
             ActiveTest.log((pass ? 'Pass' : 'Fail') + (note ? ': ' + note : ''));
-        //}
-        //catch(e)
-        //{
-            //++ActiveTest.error;
-            //ActiveTest.log('Error' + (note ? ': ' + note : ''));
-            //ActiveTest.log(e);
-        //}
+        }
+        catch(e)
+        {
+            ++ActiveTest.error;
+            ActiveTest.log('Error' + (note ? ': ' + note : ''));
+            ActiveTest.log(e);
+        }
     },
     run: function run()
     {
@@ -78,19 +78,19 @@ var ActiveTest = {
                 {            
                     stack.push(ActiveSupport.curry(function(test_name){
                         ActiveTest.currentTestName = test_name;
-                        //try
-                        //{
+                        try
+                        {
                             ActiveTest.Tests[group_name][test_name](stack.shift());
-                        //}
-                        //catch(e)
-                        //{
-                            //++ActiveTest.error;
-                            //ActiveTest.log('Error after test' + (ActiveTest.lastNote ? ': ' + ActiveTest.lastNote : ''));
-                            //ActiveTest.log(e);
-                            //var output = '[' + group_name + ' Pass:' + ActiveTest.pass +',Fail:' + ActiveTest.fail + ',Error:' + ActiveTest.error + ']';
-                            //ActiveTest.summary.push(output);
-                            //ActiveTest.log(output);
-                        //}
+                        }
+                        catch(e)
+                        {
+                            ++ActiveTest.error;
+                            ActiveTest.log('Error after test' + (ActiveTest.lastNote ? ': ' + ActiveTest.lastNote : ''));
+                            ActiveTest.log(e);
+                            var output = '[' + group_name + ' Pass:' + ActiveTest.pass +',Fail:' + ActiveTest.fail + ',Error:' + ActiveTest.error + ']';
+                            ActiveTest.summary.push(output);
+                            ActiveTest.log(output);
+                        }
                     },test_name));
                     if(ActiveTest.Tests[group_name].cleanup)
                     {
@@ -353,18 +353,17 @@ ActiveTest.Tests.ActiveRecord.basic = function(proceed)
             assert(!c.reload() && count - 1 == Comment.count(),'destroy()');
             
             //create with an id preserves id and still acts as "created"
-            //FIXME: Identity insert on in SQL server
-            //var called = false;
-            //Comment.observeOnce('afterCreate',function(){
-                //called = true;
-            //});
-            //var d = Comment.create({
-                //id: 50,
-                //title: 'd',
-                //body: 'dd'
-            //});
-            //d.reload();
-            //assert(d.id == 50 && called,'create with an id preserves id and still acts as "created"');
+            var called = false;
+            Comment.observeOnce('afterCreate',function(){
+                called = true;
+            });
+            var d = Comment.create({
+                id: 50,
+                title: 'd',
+                body: 'dd'
+            });
+            d.reload();
+            assert(d.id == 50 && called,'create with an id preserves id and still acts as "created"');
             
             Comment.destroy('all');
             assert(Comment.count() == 0,'destroy("all")');

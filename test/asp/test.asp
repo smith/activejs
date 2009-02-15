@@ -3,6 +3,8 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf8" />
     <title>Active Record ASP SQL Server Adapter Tests</title>
+<script src="prototype.js" runat="server" language="javascript"></script>
+<script src="console.js" runat="server" language="javascript"></script>
 <script src="../../latest/active_record.asp.js" runat="server" language="javascript"></script>
 <script src="test.js" runat="server" language="javascript"></script>
 <script runat="server" language="javascript">

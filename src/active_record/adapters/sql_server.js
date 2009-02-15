@@ -28,6 +28,36 @@
 (function () {
 
 ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(ActiveRecord.Adapters.SQL),{
+    insertEntity: function insertEntity(table, primary_key_name, data) {
+        var keys = ActiveSupport.keys(data).sort();
+        var values = [];
+        var args = [];
+        var sql = "";
+        var response, id, data_with_id;
+
+        for(var i = 0; i < keys.length; ++i) {
+            args.push(data[keys[i]]);
+            values.push('?');
+        }
+        sql = "INSERT INTO " + table + " (" + keys.join(',') + ") VALUES (" + 
+            values.join(',') + ");";
+
+        // If we're trying to insert a primary key, turn identity insert on 
+        // then off
+        if (primary_key_name in data) {
+            sql = "SET IDENTITY_INSERT " + table + " ON;" + sql + 
+                "SET IDENTITY_INSERT " + table + " OFF;";
+        }
+
+        args.unshift(sql);
+        response = this.executeSQL.apply(this,args);
+        id = this.getLastInsertedRowId();
+        data_with_id = ActiveSupport.clone(data);
+        data_with_id[primary_key_name] = id;
+        this.notify('created',table,id,data_with_id);
+        return response;
+    },
+
     createTable: function createTable(table_name,columns) {
         var keys = ActiveSupport.keys(columns);
         var fragments = [];
