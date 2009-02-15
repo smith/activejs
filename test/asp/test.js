@@ -44,18 +44,18 @@ var ActiveTest = {
     assert: function assert(condition,note)
     {
         ActiveTest.lastNote = note;
-        try
-        {
+        //try
+        //{
             var pass = !!(typeof(condition) === 'function' ? condition() : condition);
             ++ActiveTest[pass ? 'pass' : 'fail'];
             ActiveTest.log((pass ? 'Pass' : 'Fail') + (note ? ': ' + note : ''));
-        }
-        catch(e)
-        {
-            ++ActiveTest.error;
-            ActiveTest.log('Error' + (note ? ': ' + note : ''));
-            ActiveTest.log(e);
-        }
+        //}
+        //catch(e)
+        //{
+            //++ActiveTest.error;
+            //ActiveTest.log('Error' + (note ? ': ' + note : ''));
+            //ActiveTest.log(e);
+        //}
     },
     run: function run()
     {
@@ -78,19 +78,19 @@ var ActiveTest = {
                 {            
                     stack.push(ActiveSupport.curry(function(test_name){
                         ActiveTest.currentTestName = test_name;
-                        try
-                        {
+                        //try
+                        //{
                             ActiveTest.Tests[group_name][test_name](stack.shift());
-                        }
-                        catch(e)
-                        {
-                            ++ActiveTest.error;
-                            ActiveTest.log('Error after test' + (ActiveTest.lastNote ? ': ' + ActiveTest.lastNote : ''));
-                            ActiveTest.log(e);
-                            var output = '[' + group_name + ' Pass:' + ActiveTest.pass +',Fail:' + ActiveTest.fail + ',Error:' + ActiveTest.error + ']';
-                            ActiveTest.summary.push(output);
-                            ActiveTest.log(output);
-                        }
+                        //}
+                        //catch(e)
+                        //{
+                            //++ActiveTest.error;
+                            //ActiveTest.log('Error after test' + (ActiveTest.lastNote ? ': ' + ActiveTest.lastNote : ''));
+                            //ActiveTest.log(e);
+                            //var output = '[' + group_name + ' Pass:' + ActiveTest.pass +',Fail:' + ActiveTest.fail + ',Error:' + ActiveTest.error + ']';
+                            //ActiveTest.summary.push(output);
+                            //ActiveTest.log(output);
+                        //}
                     },test_name));
                     if(ActiveTest.Tests[group_name].cleanup)
                     {
@@ -129,149 +129,140 @@ ActiveTest.Tests.ActiveRecord = {};
 
 ActiveTest.Tests.ActiveRecord.setup = function(proceed)
 {
-    if(ActiveRecord.asynchronous)
-    {
-        ActiveRecord.execute('SELECT * FROM sqlite_master');
-        
-    }
-    else
-    {
-        
         ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'schema_migrations' AND xtype = 'U') DROP TABLE schema_migrations");
-        if(ActiveRecord.Migrations.Meta)
-        {
-            delete ActiveRecord.Migrations.Meta;
-        }
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'posts' AND xtype = 'U') DROP TABLE posts");
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'comments' AND xtype = 'U') DROP TABLE comments");
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'users' AND xtype = 'U') DROP TABLE users");
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'credit_cards' AND xtype = 'U') DROP TABLE credit_cards");
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'string_dates' AND xtype = 'U') DROP TABLE string_dates");
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'dates' AND xtype = 'U') DROP TABLE dates");
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'articles' AND xtype = 'U') DROP TABLE articles");
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categories' AND xtype = 'U') DROP TABLE categories");
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categorizations' AND xtype = 'U') DROP TABLE categorizations");
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE field_type_testers");
-        ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE singular_table_name");
-        
-        ActiveRecord.execute("IF NOT EXISTS (SELECT name FROM sysobjects WHERE name = 'posts' AND xtype = 'U') CREATE TABLE posts (id INTEGER IDENTITY,user_id INTEGER,title VARCHAR(255),body TEXT)");
- 
-        Post = ActiveRecord.create('posts');
-        with(Post)
-        {
-            belongsTo('user',{
-                counter: 'post_count'
-            });
-            hasMany('comments',{
-                dependent: true
-            });
-        }
-
-        //define Comments via Migrations
-        Comment = ActiveRecord.create('comments',{
-            title: '',
-            post_id: 0,
-            user_id: 0,
-            body: {
-                type: 'text',
-                value: ''
-            },
-            test: {},
-            test_2: []
-        });
-        Comment.validatesPresenceOf('title');
-        Comment.belongsTo('user');
-        Comment.belongsTo(Post);
-
-        CreditCard = ActiveRecord.create('credit_cards',{
-            number: 0
-        });
-
-        User = ActiveRecord.create('users',{
-            name: '',
-            password: '',
-            comment_count: 0,
-            post_count: 0,
-            credit_card_id: 0
-        });
-        //you can mix and match singular, plural, camelcase, normal
-        User.hasMany('Comment',{
-            dependent: true
-        });
-        User.hasMany('posts',{
-            dependent: true
-        });
-        User.hasOne(CreditCard,{
-            dependent: true
-        });
-        
-        ModelWithStringDates = ActiveRecord.create('string_dates',{
-            name: '',
-            created: '',
-            updated: ''
-        });
-        
-        ModelWithDates = ActiveRecord.create('dates',{
-            name: '',
-            created: {
-                type: 'DATETIME'
-            },
-            updated: {
-                type: 'DATETIME'
-            }
-        });
-        
-        Article = ActiveRecord.create('articles',{
-            name: ''
-        });
-        Article.hasMany('Categorization');
-        Article.hasMany('Category',{
-            through: 'Categorization'
-        });
-        
-        Category = ActiveRecord.create('categories',{
-            name: ''
-        });
-        Category.hasMany('Categorization');
-        Category.hasMany('Article',{
-            through: 'Categorization'
-        });
-        
-        Categorization = ActiveRecord.create('categorizations',{
-            article_id: 0,
-            category_id: 0
-        });
-        Categorization.belongsTo('Article',{
-            dependent: true
-        });
-        Categorization.belongsTo('Category',{
-            dependent: true
-        });
-        
-// SQL Server doesn't have MEDIUMTEXT. Just use TEXT.
-        FieldTypeTester = ActiveRecord.create('field_type_testers',{
-            string_field: '',
-            number_field: 0,
-            default_value_field: 'DEFAULT',
-            boolean_field: true,
-            custom_type_field: {
-                //type: 'MEDIUMTEXT'
-                type: 'TEXT'
-            },
-            custom_type_field_with_default: {
-                //type: 'MEDIUMTEXT'
-                type: 'TEXT',
-                value: 'DEFAULT'
-            }
-        });
-        
-        SingularTableName = ActiveRecord.create('singular_table_name',{
-            string_field: ''
-        });
-        
-        if(proceed)
-            proceed();
+    if(ActiveRecord.Migrations.Meta)
+    {
+        delete ActiveRecord.Migrations.Meta;
     }
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'posts' AND xtype = 'U') DROP TABLE posts");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'comments' AND xtype = 'U') DROP TABLE comments");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'users' AND xtype = 'U') DROP TABLE users");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'credit_cards' AND xtype = 'U') DROP TABLE credit_cards");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'string_dates' AND xtype = 'U') DROP TABLE string_dates");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'dates' AND xtype = 'U') DROP TABLE dates");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'articles' AND xtype = 'U') DROP TABLE articles");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categories' AND xtype = 'U') DROP TABLE categories");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categorizations' AND xtype = 'U') DROP TABLE categorizations");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE field_type_testers");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE singular_table_name");
+    
+    ActiveRecord.execute("IF NOT EXISTS (SELECT name FROM sysobjects WHERE name = 'posts' AND xtype = 'U') CREATE TABLE posts (id INTEGER IDENTITY,user_id INTEGER,title VARCHAR(255),body TEXT)");
+
+    Post = ActiveRecord.create('posts');
+    with(Post)
+    {
+        belongsTo('user',{
+            counter: 'post_count'
+        });
+        hasMany('comments',{
+            dependent: true
+        });
+    }
+
+    //define Comments via Migrations
+    Comment = ActiveRecord.create('comments',{
+        title: '',
+        post_id: 0,
+        user_id: 0,
+        body: {
+            type: 'text',
+            value: ''
+        },
+        test: {},
+        test_2: []
+    });
+    Comment.validatesPresenceOf('title');
+    Comment.belongsTo('user');
+    Comment.belongsTo(Post);
+
+    CreditCard = ActiveRecord.create('credit_cards',{
+        number: 0
+    });
+
+    User = ActiveRecord.create('users',{
+        name: '',
+        password: '',
+        comment_count: 0,
+        post_count: 0,
+        credit_card_id: 0
+    });
+    //you can mix and match singular, plural, camelcase, normal
+    User.hasMany('Comment',{
+        dependent: true
+    });
+    User.hasMany('posts',{
+        dependent: true
+    });
+    User.hasOne(CreditCard,{
+        dependent: true
+    });
+    
+    ModelWithStringDates = ActiveRecord.create('string_dates',{
+        name: '',
+        created: '',
+        updated: ''
+    });
+    
+    ModelWithDates = ActiveRecord.create('dates',{
+        name: '',
+        created: {
+            type: 'DATETIME'
+        },
+        updated: {
+            type: 'DATETIME'
+        }
+    });
+    
+    Article = ActiveRecord.create('articles',{
+        name: ''
+    });
+    Article.hasMany('Categorization');
+    Article.hasMany('Category',{
+        through: 'Categorization'
+    });
+    
+    Category = ActiveRecord.create('categories',{
+        name: ''
+    });
+    Category.hasMany('Categorization');
+    Category.hasMany('Article',{
+        through: 'Categorization'
+    });
+    
+    Categorization = ActiveRecord.create('categorizations',{
+        article_id: 0,
+        category_id: 0
+    });
+    Categorization.belongsTo('Article',{
+        dependent: true
+    });
+    Categorization.belongsTo('Category',{
+        dependent: true
+    });
+    
+// SQL Server doesn't have MEDIUMTEXT. Just use TEXT.
+    FieldTypeTester = ActiveRecord.create('field_type_testers',{
+        string_field: '',
+        number_field: 0,
+        default_value_field: 'DEFAULT',
+        boolean_field: true,
+        custom_type_field: {
+            //type: 'MEDIUMTEXT'
+            type: 'TEXT'
+        },
+        custom_type_field_with_default: {
+            //type: 'MEDIUMTEXT'
+            type: 'TEXT',
+            value: 'DEFAULT'
+        }
+    });
+    
+    SingularTableName = ActiveRecord.create('singular_table_name',{
+        string_field: ''
+    });
+    
+    if(proceed)
+        proceed();
 };
 
 ActiveTest.Tests.ActiveRecord.teardown = function(proceed)
@@ -360,7 +351,21 @@ ActiveTest.Tests.ActiveRecord.basic = function(proceed)
             var count = Comment.count();
             c.destroy();
             assert(!c.reload() && count - 1 == Comment.count(),'destroy()');
-
+            
+            //create with an id preserves id and still acts as "created"
+            //FIXME: Identity insert on in SQL server
+            //var called = false;
+            //Comment.observeOnce('afterCreate',function(){
+                //called = true;
+            //});
+            //var d = Comment.create({
+                //id: 50,
+                //title: 'd',
+                //body: 'dd'
+            //});
+            //d.reload();
+            //assert(d.id == 50 && called,'create with an id preserves id and still acts as "created"');
+            
             Comment.destroy('all');
             assert(Comment.count() == 0,'destroy("all")');
             
@@ -493,20 +498,19 @@ ActiveTest.Tests.ActiveRecord.date = function(proceed)
             var a = ModelWithDates.create({
                 name: 'a'
             });
-            assert(a.get('created').match(/^\d{4}/) && a.get('updated').match(/^\d{4}/),'created and updated set via date field');
+            assert(ActiveSupport.dateFormat(a.get('created'),'yyyy-mm-dd HH:MM:ss').match(/^\d{4}/) && ActiveSupport.dateFormat(a.get('updated'),'yyyy-mm-dd HH:MM:ss').match(/^\d{4}/),'created and updated set via date field');
             var old_date = a.get('updated');
             a.set('updated','');
             a.save();
             var new_date = a.get('updated');
             var saved_date = ModelWithDates.find(a.id).get('updated');
-            if(saved_date instanceof Date){
-                saved_date = ActiveSupport.dateFormat(saved_date,'yyyy-mm-dd HH:MM:ss',true);
-            }
-            assert(saved_date == new_date,'created and updated persist via date field');
+            assert(saved_date.toString() == new_date.toString(),'created and updated persist via date field');
             
             //make sure dates are preserved
             var reload_test = ModelWithDates.find(a.id);
             var old_created = reload_test.get('created');
+            reload_test.save();
+            reload_test.reload();
             reload_test.save();
             reload_test.reload();
             assert(reload_test.get('created').toString() == old_created.toString(),'created time is preserved on update');
@@ -564,6 +568,11 @@ ActiveTest.Tests.ActiveRecord.finders = function(proceed)
             //b = Comment.find('SELECT * FROM comments WHERE title = ? LIMIT 1','b');
             b = Comment.find('SELECT TOP 1 * FROM comments WHERE title = ?','b');
             assert(b[0] && b[0].title == 'b','find(SQL string with WHERE, LIMIT and param substituion)');
+            b = Comment.find({
+              where: ['title = ?','b'],
+              limit: 1
+            });
+            assert(b[0] && b[0].title == 'b','find(SQL string with WHERE, LIMIT and param substituion via find)');            
             
             assert(Comment.find().length == 3 && Comment.find({all: true}).length == 3,'find({all: true})');
 
@@ -587,16 +596,17 @@ ActiveTest.Tests.ActiveRecord.finders = function(proceed)
             assert(Comment.findByTitle('a').title == a.title && Comment.findById(a.id).id == a.id,'findByX works');
             
             //test GROUP BY
-// Commented out for now
             Comment.destroy('all');
             var one = Comment.create({title: 'a'});
             var two = Comment.create({title: 'a'});
             var three = Comment.create({title: 'b'});
-            //var result = Comment.find({
-                //group: 'title',
-                //order: 'id ASC'
-            //});
+// This 'group' is currently ignored by the sql server adapter
+            var result = Comment.find({
+                group: 'title',
+                order: 'id ASC'
+            });
             //assert(result[0].title == 'a' && result[1].title == 'b','GROUP BY clause via params works');
+// This is not a valid SQL Server query
             //var result = Comment.find('SELECT * FROM comments GROUP BY title ORDER BY id ASC');
             //assert(result[0].title == 'a' && result[1].title == 'b','GROUP BY clause via SQL works');
             
@@ -1241,4 +1251,3 @@ ActiveTest.Tests.ActiveRecord.parser = function(proceed)
         }
     }
 };
-

@@ -339,7 +339,7 @@
         "files": [
             "license.txt",
             "src/active_test.js",
-            "test/active_record/setup.js",
+            "test/active_record/sql_server/setup.js",
             "test/active_record/teardown.js",
             "test/active_record/sql_server/basic.js",
             "test/active_record/callbacks.js",

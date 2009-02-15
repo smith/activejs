@@ -100,6 +100,9 @@ ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Activ
     },
 
     fieldIn: function fieldIn(field, value) {
+        if (value && value instanceof Date) {
+            return ActiveSupport.dateFormat(value,'yyyy-mm-dd HH:MM:ss');
+        }
         if (ActiveRecord.Migrations.objectIsFieldDefinition(field)) {
             field = this.getDefaultValueFromFieldDefinition(field);
         }
