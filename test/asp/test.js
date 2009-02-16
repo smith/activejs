@@ -145,7 +145,8 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
     ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categorizations' AND xtype = 'U') DROP TABLE categorizations");
     ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE field_type_testers");
     ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE singular_table_name");
-    
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE singular_table_name");
+
     ActiveRecord.execute("IF NOT EXISTS (SELECT name FROM sysobjects WHERE name = 'posts' AND xtype = 'U') CREATE TABLE posts (id INTEGER IDENTITY,user_id INTEGER,title VARCHAR(255),body TEXT)");
 
     Post = ActiveRecord.create('posts');
@@ -259,6 +260,16 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
     
     SingularTableName = ActiveRecord.create('singular_table_name',{
         string_field: ''
+    });
+
+    Custom = ActiveRecord.create({
+        tableName: 'custom_table',
+        modelName: 'Orange'
+    },{
+        custom_id: {
+            primaryKey: true
+        },
+        name: ''
     });
     
     if(proceed)
