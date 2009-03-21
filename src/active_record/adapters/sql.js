@@ -25,9 +25,7 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
-(function () {
-
-ActiveRecord.Adapters.SQL = {
+Adapters.SQL = {
     schemaLess: false,
     insertEntity: function insertEntity(table, primary_key_name, data)
     {
@@ -41,7 +39,7 @@ ActiveRecord.Adapters.SQL = {
         }
         args.unshift("INSERT INTO " + table + " (" + keys.join(',') + ") VALUES (" + values.join(',') + ")");
         var response = this.executeSQL.apply(this,args);
-        var id = this.getLastInsertedRowId();
+        var id = data[primary_key_name] || this.getLastInsertedRowId();
         var data_with_id = ActiveSupport.clone(data);
         data_with_id[primary_key_name] = id;
         this.notify('created',table,id,data_with_id);
@@ -311,4 +309,3 @@ ActiveRecord.Adapters.SQL = {
     }
 };
 
-})();
