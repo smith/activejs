@@ -173,17 +173,17 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
         },
         name: ''
     });
-   
-    Guid = ActiveRecord.create({
-        tableName: 'guid'
-    },{
-        guid: {
-            primaryKey: true,
-            type: 'VARCHAR(255)'
-        },
-        data: ''
-    });
-        
+
+// FIXME: SQL Server has problems with non-numeric identities   
+//    Guid = ActiveRecord.create({
+//        tableName: 'guid'
+//    },{
+//        guid: {
+//            primaryKey: true,
+//            type: 'VARCHAR(255)'
+//        },
+//        data: ''
+//    });
  
     if(proceed)
         proceed();
