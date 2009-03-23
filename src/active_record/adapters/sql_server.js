@@ -25,8 +25,6 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
-(function () {
-
 ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(ActiveRecord.Adapters.SQL),{
     insertEntity: function insertEntity(table, primary_key_name, data) {
         var keys = ActiveSupport.keys(data).sort();
@@ -61,11 +59,14 @@ ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Activ
     createTable: function createTable(table_name,columns) {
         var keys = ActiveSupport.keys(columns);
         var fragments = [];
+        var type;
 
         for (var i = 0; i < keys.length; i += 1) {
             var key = keys[i];
             if (columns[key].primaryKey) {
-                fragments.unshift(key + " INT NOT NULL IDENTITY");
+                type = columns[key].type || "INT";
+                fragments.unshift(key + " " + type + " NOT NULL " + 
+                    (type === "INT" ? "IDENTITY" : ""));
             } else {
                 fragments.push(this.getColumnDefinitionFragmentFromKeyAndColumns(key,columns));
             }
@@ -102,6 +103,7 @@ ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Activ
     },
 
     // TODO: Offset
+    // TODO: Get primary key
     // FIXME: GROUP BY fails because of SQL Server being finicky. Skip it for 
     // now
     buildSQLArguments: function buildSQLArguments(table, params, calculation) {
@@ -154,4 +156,3 @@ ActiveRecord.Adapters.SQLServer = ActiveSupport.extend(ActiveSupport.clone(Activ
     }
 });
 
-})();

@@ -44,9 +44,11 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
     ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categories' AND xtype = 'U') DROP TABLE categories");
     ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categorizations' AND xtype = 'U') DROP TABLE categorizations");
     ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE field_type_testers");
-    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE singular_table_name");
-    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE singular_table_name");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'singular_table_name' AND xtype = 'U') DROP TABLE singular_table_name");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'custom_table' AND xtype = 'U') DROP TABLE custom_table");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'guid' AND xtype = 'U') DROP TABLE guid");
 
+    //define Posts via SQL
     ActiveRecord.execute("IF NOT EXISTS (SELECT name FROM sysobjects WHERE name = 'posts' AND xtype = 'U') CREATE TABLE posts (id INTEGER IDENTITY,user_id INTEGER,title VARCHAR(255),body TEXT)");
 
     Post = ActiveRecord.create('posts');
@@ -171,7 +173,18 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
         },
         name: ''
     });
-    
+   
+    Guid = ActiveRecord.create({
+        tableName: 'guid'
+    },{
+        guid: {
+            primaryKey: true,
+            type: 'VARCHAR(255)'
+        },
+        data: ''
+    });
+        
+ 
     if(proceed)
         proceed();
 };

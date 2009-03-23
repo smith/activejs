@@ -25,8 +25,6 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
-(function () {
-
 /**
  * Adapter for ASP configured with SQL Server.
  * @alias ActiveRecord.Adapters.ASPSQLServer
@@ -203,4 +201,3 @@ ActiveRecord.Adapters.ASPSQLServer.connect = function connect(options) {
     return new ActiveRecord.Adapters.ASPSQLServer(connection);
 };
 
-})();

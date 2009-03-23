@@ -192,7 +192,6 @@
             "src/active_support.js",
             "src/active_event.js",
             "include_active_record",
-            "src/active_record/adapters/sql.js",
             "src/active_record/adapters/sql_server.js",
             "src/active_record/adapters/asp_sql_server.js"
         ]
@@ -348,6 +347,7 @@
             "test/active_record/cleanup.js",
             "test/active_record/date.js",
             "test/active_record/sql_server/finders.js",
+            "test/active_record/id.js",
             "test/active_record/migrations.js",
             "test/active_record/relationships.js",
             "test/active_record/serialization.js",
