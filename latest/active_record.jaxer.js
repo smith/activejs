@@ -88,13 +88,16 @@ ActiveSupport = {
     {
         if(typeof(Jaxer) !== 'undefined')
         {
+            if (typeof Jaxer.console !== 'undefined') {
+                console.log.apply(console, arguments || []);
+            }
             Jaxer.Log.info.apply(Jaxer.Log,arguments || []);
         }
-        else if(typeof(air) !== 'undefined')
+        if(typeof(air) !== 'undefined')
         {
             air.Introspector.Console.log.apply(air.Introspector.Console,arguments || []);
         }
-        else if(typeof(console) !== 'undefined')
+        if(typeof(console) !== 'undefined')
         {
             console.log.apply(console,arguments || []);
         }
@@ -520,7 +523,7 @@ ActiveSupport = {
             ]
         },
         /**
-         * Generates an orginalized version of a number as a string (9th, 2nd, etc)
+         * Generates an ordinalized version of a number as a string (9th, 2nd, etc)
          * @alias ActiveSupport.Inflector.ordinalize
          * @param {Number} number
          * @return {String}
@@ -1289,7 +1292,7 @@ ActiveSupport = {
  * --------------
  * If an object has an options property that contains a callable function with
  * the same name as an event triggered with <b>notify()</b>, it will be
- * treated just like an instance observer. So the falling code is equivalent.
+ * treated just like an instance observer. So the following code is equivalent:
  *
  *     var rating_one = new Control.Rating('rating_one',{  
  *         afterChange: function(new_value){}    
@@ -2586,7 +2589,7 @@ ActiveSupport.extend(ActiveRecord.ClassMethods,{
         {
             params = {};
         }
-        if (params.first || ((typeof(params) === "number" || (typeof(params) === "string" && params.match(/^\d+$/))) && arguments.length == 1))
+        if ((params.first && typeof params.first === "boolean") || ((typeof(params) === "number" || (typeof(params) === "string" && params.match(/^\d+$/))) && arguments.length == 1))
         {
             if (params.first)
             {
@@ -3327,14 +3330,14 @@ Adapters.SQL = {
             return (new String(parseInt(new Number(value), 10))).toString();
         }
         //array or object
-        if (typeof(value) === 'object' && !Migrations.objectIsFieldDefinition(field))
+        if (typeof(value) === 'object' && !ActiveRecord.Migrations.objectIsFieldDefinition(field))
         {
             return ActiveSupport.JSON.stringify(value);
         }
     },
     fieldOut: function fieldOut(field, value)
     {
-        if(Migrations.objectIsFieldDefinition(field))
+        if(ActiveRecord.Migrations.objectIsFieldDefinition(field))
         {
             //date handling
             if(field.type.toLowerCase().match(/date/) && typeof(value) == 'string')
@@ -5159,7 +5162,7 @@ var Migrations = {
         'bitint': 0,
         'float': 0,
         'double': 0,
-        'bouble precision': 0,
+        'double precision': 0,
         'real': 0,
         'decimal': 0,
         'numeric': 0,

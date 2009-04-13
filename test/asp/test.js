@@ -59,6 +59,10 @@ var ActiveTest = {
     },
     run: function run()
     {
+        ActiveTest.summary = [];
+        ActiveTest.lastNote = '';
+        ActiveTest.currentGroupName = null;
+        ActiveTest.currentTestName = null;
         for(var group_name in ActiveTest.Tests)
         {
             ActiveTest.log(group_name + ' Test Starting');
@@ -144,9 +148,11 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
     ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categories' AND xtype = 'U') DROP TABLE categories");
     ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'categorizations' AND xtype = 'U') DROP TABLE categorizations");
     ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE field_type_testers");
-    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE singular_table_name");
-    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'field_type_testers' AND xtype = 'U') DROP TABLE singular_table_name");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'singular_table_name' AND xtype = 'U') DROP TABLE singular_table_name");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'custom_table' AND xtype = 'U') DROP TABLE custom_table");
+    ActiveRecord.execute("IF EXISTS (SELECT name FROM sysobjects WHERE name = 'guid' AND xtype = 'U') DROP TABLE guid");
 
+    //define Posts via SQL
     ActiveRecord.execute("IF NOT EXISTS (SELECT name FROM sysobjects WHERE name = 'posts' AND xtype = 'U') CREATE TABLE posts (id INTEGER IDENTITY,user_id INTEGER,title VARCHAR(255),body TEXT)");
 
     Post = ActiveRecord.create('posts');
@@ -271,7 +277,18 @@ ActiveTest.Tests.ActiveRecord.setup = function(proceed)
         },
         name: ''
     });
-    
+
+// FIXME: SQL Server has problems with non-numeric identities   
+//    Guid = ActiveRecord.create({
+//        tableName: 'guid'
+//    },{
+//        guid: {
+//            primaryKey: true,
+//            type: 'VARCHAR(255)'
+//        },
+//        data: ''
+//    });
+ 
     if(proceed)
         proceed();
 };
@@ -632,6 +649,29 @@ ActiveTest.Tests.ActiveRecord.finders = function(proceed)
             var c = Comment.find('SELECT * FROM comments WHERE id IN(?,?,?)',one.id,two.id,three.id);
             assert(c.length == 3 && c[0].id == one.id && c[1].id == two.id && c[2].id == three.id,'WHERE id IN(array) via SQL string');
             
+            if(proceed)
+                proceed();
+        }
+    }
+};
+
+ActiveTest.Tests.ActiveRecord.id = function(proceed)
+{
+    with (ActiveTest)
+    {
+        if (ActiveRecord.asynchronous)
+        {
+
+        }
+        else
+        {
+            var a = Custom.create({name: 'test'});
+            assert(Custom.find(a.custom_id).name == 'test', 'Custom integer primary key.');
+
+            //var b = Guid.create({guid: '123', data: 'test'});
+            //var result = Guid.find({first: true, where: ['guid = ?', b.guid]});
+            //assert(result.data == 'test', 'String primary key.');
+
             if(proceed)
                 proceed();
         }

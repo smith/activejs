@@ -193,7 +193,7 @@
             "src/active_support.js",
             "src/active_event.js",
             "include_active_record",
-            "src/active_record/adapters/sql_server.js",
+            "src/active_record/adapters/support/sql_server.js",
             "src/active_record/adapters/asp_sql_server.js"
         ]
     },
