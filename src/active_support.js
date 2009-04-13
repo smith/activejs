@@ -32,6 +32,10 @@
  */
 var ActiveSupport = null;
 
+if(typeof exports != "undefined"){
+    exports.ActiveSupport = ActiveSupport;
+}
+
 (function(global_context){
 ActiveSupport = {
     /**
@@ -519,7 +523,7 @@ ActiveSupport = {
             ]
         },
         /**
-         * Generates an orginalized version of a number as a string (9th, 2nd, etc)
+         * Generates an ordinalized version of a number as a string (9th, 2nd, etc)
          * @alias ActiveSupport.Inflector.ordinalize
          * @param {Number} number
          * @return {String}
