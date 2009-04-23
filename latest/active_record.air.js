@@ -37,6 +37,7 @@ if(typeof exports != "undefined"){
 }
 
 (function(global_context){
+
 ActiveSupport = {
     /**
      * Returns the global context object (window in most implementations).
@@ -207,7 +208,8 @@ ActiveSupport = {
      * @param {mixed} item to remove
      * @return {Array}
      */
-    without: function without(arr){
+    without: function without(arr)
+    {
         var values = ActiveSupport.arrayFrom(arguments).slice(1);
         var response = [];
         for(var i = 0 ; i < arr.length; i++)
@@ -322,7 +324,8 @@ ActiveSupport = {
      * @param {Boolean} [capitalize]
      * @return {String}
      */
-    camelize: function camelize(str, capitalize){
+    camelize: function camelize(str, capitalize)
+    {
         var camelized,
             parts = str.replace(/\_/g,'-').split('-'), len = parts.length;
         if (len === 1)
@@ -587,7 +590,8 @@ ActiveSupport = {
          * @param {String} word
          * @return {String}
          */
-        singularize: function singularize(word) {
+        singularize: function singularize(word)
+        {
             var i;
             for (i = 0; i < ActiveSupport.Inflector.Inflections.uncountable.length; i++)
             {
@@ -1193,8 +1197,8 @@ ActiveSupport = {
  * @namespace {ActiveEvent}
  * @example
  * 
- * ActiveEvent.js
- * ==============
+ * ActiveEvent
+ * ===========
  * 
  * ActiveEvent allows you to create observable events, and attach event
  * handlers to any class or object.
@@ -1650,8 +1654,8 @@ if(typeof exports != "undefined"){
  * @namespace {ActiveRecord}
  * @example
  * 
- * ActiveRecord.js
- * ===============
+ * ActiveRecord
+ * ============
  * 
  * ActiveRecord.js is a cross browser, cross platform, stand-alone object
  * relational mapper. It shares a very similar vocabulary to the Ruby
@@ -3330,14 +3334,14 @@ Adapters.SQL = {
             return (new String(parseInt(new Number(value), 10))).toString();
         }
         //array or object
-        if (typeof(value) === 'object' && !ActiveRecord.Migrations.objectIsFieldDefinition(field))
+        if (typeof(value) === 'object' && !Migrations.objectIsFieldDefinition(field))
         {
             return ActiveSupport.JSON.stringify(value);
         }
     },
     fieldOut: function fieldOut(field, value)
     {
-        if(ActiveRecord.Migrations.objectIsFieldDefinition(field))
+        if(Migrations.objectIsFieldDefinition(field))
         {
             //date handling
             if(field.type.toLowerCase().match(/date/) && typeof(value) == 'string')
