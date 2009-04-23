@@ -39,8 +39,8 @@ application.</p>
 
 <h2>Declaring Routes</h2>
 
-<p>Wether declared in the constructor, or with addRoute(), routes can have up
-to three parameters, and can be declared in any of the follow ways:</p>
+<p>Whether declared in the constructor, or with addRoute(), routes can have up
+to three parameters, and can be declared in any of the following ways:</p>
 
 <ul>
 <li>"name", "path", {params}</li>
@@ -83,7 +83,7 @@ constructor. This hash can contain the following keys:</p>
 
 <p>If you want to route all requests below a certain path to a given method,
 place an asterisk in your route. When a matching path is dispatched to
-that route the path components will be available in an array called "path".</p>
+that route the path components will be available in an array called "path":</p>
 
 <pre><code>route_set.addRoute('/wiki/*',{object:'WikiController',method:'page'})
 route_set.dispatch('/wiki/a/b/c');
@@ -96,7 +96,7 @@ route_set.dispatch('/wiki/a/b/c');
 passed in the params passed to the called method. Each requirement
 can be a regular expression or a function, which the value of the
 parameter will be checked against. Each value checked by a regular
-expression or function is always a string.</p>
+expression or function is always a string:</p>
 
 <pre><code>route_set.addRoute('/article/:article_id/:comment_id',{
     article_id: /^\d+$/,
@@ -121,7 +121,7 @@ URL from an object. Using the routes declared in the example above:</p>
 </code></pre>
 
 <p>If named routes are given, corresponding methods are generated in the
-passed scope to resolve these urls.</p>
+passed scope to resolve these urls:</p>
 
 <pre><code>Application.postUrl({id: 5}) == '/blog/post/5';
 </code></pre>
@@ -139,7 +139,7 @@ back to params use:</p>
 
 <h2>Dispatching</h2>
 
-<p>To call a given method from a URL string, use the dispatch() method.</p>
+<p>To call a given method from a URL string, use the dispatch() method:</p>
 
 <pre><code>routes.dispatch('/'); //will call Pages.index()
 routes.dispatch('/blog/post/5'); //will call Blog.post({id: 5});
