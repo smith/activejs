@@ -7542,8 +7542,10 @@ ActiveView.Template.generateTemplate = function generateTemplate(source)
             .split("\t").join("'")
             .replace(/<%=(.+?)%>/g, "',$1,'")
             .split("<%").join("');")
-            .split("%>").join("p.push('")
-        ;
+            .split("%>");
+console.log(processed_source);
+            processed_source = processed_source.join("p.push('");
+
         return new Function("data",[
             "var p = [];",
             "var print = function(){p.push.apply(p,arguments);};",
