@@ -522,6 +522,7 @@ ActiveSupport = {
                 "money",
                 "rice",
                 "information",
+				"info",
                 "equipment"
             ]
         },
@@ -560,7 +561,7 @@ ActiveSupport = {
             for (i = 0; i < ActiveSupport.Inflector.Inflections.uncountable.length; i++)
             {
                 var uncountable = ActiveSupport.Inflector.Inflections.uncountable[i];
-                if (word.toLowerCase === uncountable)
+                if (word.toLowerCase() === uncountable || ActiveSupport.underscore(word.toLowerCase()).split('_').pop() === uncountable)
                 {
                     return uncountable;
                 }
@@ -569,7 +570,7 @@ ActiveSupport = {
             {
                 var singular = ActiveSupport.Inflector.Inflections.irregular[i][0];
                 var plural = ActiveSupport.Inflector.Inflections.irregular[i][1];
-                if ((word.toLowerCase === singular) || (word === plural))
+                if ((word.toLowerCase() === singular) || (word === plural))
                 {
                     return plural;
                 }
@@ -583,6 +584,7 @@ ActiveSupport = {
                     return word.replace(regex, replace_string);
                 }
             }
+						return word;
         },
         /**
          * Generates a singular version of an english word.
@@ -596,7 +598,7 @@ ActiveSupport = {
             for (i = 0; i < ActiveSupport.Inflector.Inflections.uncountable.length; i++)
             {
                 var uncountable = ActiveSupport.Inflector.Inflections.uncountable[i];
-                if (word.toLowerCase === uncountable)
+                if (word.toLowerCase() === uncountable || ActiveSupport.underscore(word.toLowerCase()).split('_').pop() === uncountable)
                 {
                     return uncountable;
                 }
@@ -605,7 +607,7 @@ ActiveSupport = {
             {
                 var singular = ActiveSupport.Inflector.Inflections.irregular[i][0];
                 var plural   = ActiveSupport.Inflector.Inflections.irregular[i][1];
-                if ((word.toLowerCase === singular) || (word === plural))
+                if ((word.toLowerCase() === singular) || (word === plural))
                 {
                     return plural;
                 }
@@ -619,6 +621,7 @@ ActiveSupport = {
                     return word.replace(regex, replace_string);
                 }
             }
+						return word;
         }
     },
     /**
