@@ -26,6 +26,17 @@
  * ***** END LICENSE BLOCK ***** */
 
 var Builder = {
+    ieAttributeTranslations: {
+      'class': 'className',
+      'checked': 'defaultChecked',
+      'usemap': 'useMap',
+      'for': 'htmlFor',
+      'readonly': 'readOnly',
+      'colspan': 'colSpan',
+      'bgcolor': 'bgColor',
+      'cellspacing': 'cellSpacing',
+      'cellpadding': 'cellPadding'
+    },
     cache: {},
     createElement: function createElement(tag,attributes)
     {
@@ -92,17 +103,13 @@ var Builder = {
                 }
                 else
                 {
-                    if(name == 'class')
-                    {
-                        element.setAttribute('className',value);
-                    }
-                    else if(name == 'style')
+                    if(name == 'style')
                     {
                         element.style.cssText = value;
                     }
                     else
                     {
-                        element.setAttribute(name,value);
+                        element.setAttribute(Builder.ieAttributeTranslations[name] || name,value);
                     }
                 }
             }
@@ -166,7 +173,7 @@ Builder.generator = function generator(target,scope){
                 element = Builder.createElement(tag,attributes);
                 for(i = 0; i < elements.length; ++i)
                 {
-                    element.appendChild((elements[i] && elements[i].nodeType === 1) ? elements[i] : global_context.document.createTextNode((new String(elements[i])).toString()));
+                    element.appendChild((elements[i] && elements[i].nodeType === 1) ? elements[i] : global_context.document.createTextNode(String(elements[i])));
                 }
                 return element;
             };
