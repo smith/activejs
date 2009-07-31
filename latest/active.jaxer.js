@@ -361,6 +361,17 @@ ActiveSupport = {
         }
     },
     /**
+     * Trim leading and trailing whitespace.
+     * @alias ActiveSupport.trim
+     * @param {String} str
+     * @return {String}
+     */
+    trim: function(str)
+    {
+        return (str || "").replace(/^\s+|\s+$/g,"");
+    },
+
+    /**
      * Emulates Prototype's Object.extend
      * @alias ActiveSupport.extend
      * @param {Object} destination
@@ -557,11 +568,11 @@ ActiveSupport = {
          */
         pluralize: function pluralize(word)
         {
-            var i;
+            var i, lc = word.toLowerCase();
             for (i = 0; i < ActiveSupport.Inflector.Inflections.uncountable.length; i++)
             {
                 var uncountable = ActiveSupport.Inflector.Inflections.uncountable[i];
-                if (word.toLowerCase() === uncountable || ActiveSupport.underscore(word.toLowerCase()).split('_').pop() === uncountable)
+                if (lc === uncountable)
                 {
                     return uncountable;
                 }
@@ -570,7 +581,7 @@ ActiveSupport = {
             {
                 var singular = ActiveSupport.Inflector.Inflections.irregular[i][0];
                 var plural = ActiveSupport.Inflector.Inflections.irregular[i][1];
-                if ((word.toLowerCase() === singular) || (word === plural))
+                if ((lc === singular) || (lc === plural))
                 {
                     return plural;
                 }
@@ -594,11 +605,11 @@ ActiveSupport = {
          */
         singularize: function singularize(word)
         {
-            var i;
+            var i, lc = word.toLowerCase();
             for (i = 0; i < ActiveSupport.Inflector.Inflections.uncountable.length; i++)
             {
                 var uncountable = ActiveSupport.Inflector.Inflections.uncountable[i];
-                if (word.toLowerCase() === uncountable || ActiveSupport.underscore(word.toLowerCase()).split('_').pop() === uncountable)
+                if (lc === uncountable)
                 {
                     return uncountable;
                 }
@@ -607,9 +618,9 @@ ActiveSupport = {
             {
                 var singular = ActiveSupport.Inflector.Inflections.irregular[i][0];
                 var plural   = ActiveSupport.Inflector.Inflections.irregular[i][1];
-                if ((word.toLowerCase() === singular) || (word === plural))
+                if ((lc === singular) || (lc === plural))
                 {
-                    return plural;
+                    return singular;
                 }
             }
             for (i = 0; i < ActiveSupport.Inflector.Inflections.singular.length; i++)
@@ -621,7 +632,7 @@ ActiveSupport = {
                     return word.replace(regex, replace_string);
                 }
             }
-						return word;
+            return word;
         }
     },
     /**
@@ -2783,7 +2794,7 @@ ActiveRecord = {
      * @alias ActiveRecord.autoMigrate
      * @property {Boolean}
      */
-     autoMigrate: true,
+    autoMigrate: true,
     /**
      * Tracks the number of records created.
      * @alias ActiveRecord.internalCounter
@@ -2861,21 +2872,20 @@ ActiveRecord = {
         //constructor
         model = ActiveRecord.Models[options.modelName] = function initialize(data)
         {
-            this.modelName = this.constructor.modelName;
-            this.tableName = this.constructor.tableName;
-            this.primaryKeyName = this.constructor.primaryKeyName;
             this._object = {};
             for(var key in data)
             {
-                //third param is to supress notifications on set
+                //third param is to suppress notifications on set
                 this.set(key,data[key],true);
             }
             this._errors = [];
-            for(var key in this.constructor.fields)
+            var fields = this.constructor.fields;
+            for(var key in fields)
             {
-                if(!this.constructor.fields[key].primaryKey)
+                var field = fields[key];
+                if(!field.primaryKey)
                 {
-                    var value = ActiveRecord.connection.fieldOut(this.constructor.fields[key],this.get(key));
+                    var value = ActiveRecord.connection.fieldOut(field,this.get(key));
                     if(Migrations.objectIsFieldDefinition(value))
                     {
                         value = value.value;
@@ -2884,6 +2894,7 @@ ActiveRecord = {
                     this.set(key,value);
                 }
             }
+            this._id = this.get(this.constructor.primaryKeyName);
             //performance optimization if no observers
             this.notify('afterInitialize', data);
         };
@@ -2895,22 +2906,22 @@ ActiveRecord = {
         ActiveSupport.extend(model.prototype, ActiveRecord.InstanceMethods);
 
         //user defined methods take precedence
-				if(typeof(methods) == 'undefined')
-				{
-						//detect if the fields object is actually a methods object
-					  for(var method_name in fields)
-					  {
-						    if(typeof(fields[method_name]) == 'function')
-						    {
-							      methods = fields;
-							      fields = null; 
-						    }
-						    break;
-					  }
-				}
+        if(typeof(methods) == 'undefined')
+        {
+            //detect if the fields object is actually a methods object
+            for(var method_name in fields)
+            {
+                if(typeof(fields[method_name]) == 'function')
+                {
+                    methods = fields;
+                    fields = null; 
+                }
+                break;
+            }
+        }
         if(methods && typeof(methods) !== 'function')
         {
-            ActiveSupport.extend(model.prototype, methods || {});
+            ActiveSupport.extend(model.prototype, methods);
         }
 
         //mixin class methods
@@ -2947,6 +2958,12 @@ ActiveRecord = {
         {
             model.primaryKeyName = custom_primary_key;
         }
+
+        ActiveSupport.extend(model.prototype, {
+          modelName: model.modelName,
+          tableName: model.tableName,
+          primaryKeyName: model.primaryKeyName
+        });
         
         //generate finders
         for(var key in model.fields)
@@ -2954,6 +2971,8 @@ ActiveRecord = {
             Finders.generateFindByField(model,key);
             Finders.generateFindAllByField(model,key);
         }
+        //get is a synonym for findBy<PrimaryKey>
+        model.get = model['findBy' + ActiveSupport.camelize(model.primaryKeyName, true)];
         
         //create table for model if autoMigrate enabled
         if(ActiveRecord.autoMigrate)
@@ -3082,17 +3101,17 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
      * @alias ActiveRecord.Instance.set
      * @param {String} key
      * @param {mixed} value
-     * @param {Boolean} surpress_notifications Defaults to false
+     * @param {Boolean} suppress_notifications Defaults to false
      * @return {mixed} the value that was set
      */
-    set: function set(key, value, surpress_notifications)
+    set: function set(key, value, suppress_notifications)
     {
         if (typeof(this[key]) !== "function")
         {
             this[key] = value;
         }
         this._object[key] = value;
-        if(!surpress_notifications)
+        if(!suppress_notifications)
         {
             this.notify('set',key,value);
         }
@@ -3175,11 +3194,11 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
      */
     reload: function reload()
     {
-        if (!this.get(this.constructor.primaryKeyName))
+        if (this._id === undefined)
         {
             return false;
         }
-        var record = this.constructor.find(this.get(this.constructor.primaryKeyName));
+        var record = this.constructor.get(this._id);
         if (!record)
         {
             return false;
@@ -3211,7 +3230,7 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
         {
             if(!this.constructor.fields[key].primaryKey)
             {
-                //third param is to surpress observers
+                //third param is to suppress observers
                 this.set(key,ActiveRecord.connection.fieldIn(this.constructor.fields[key],this.get(key)),true);
             }
         }
@@ -3223,7 +3242,7 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
         {
             this.set('updated',ActiveSupport.dateFormat('yyyy-mm-dd HH:MM:ss'));
         }
-        if (force_created_mode || !this.get(this.constructor.primaryKeyName))
+        if (force_created_mode || this._id === undefined)
         {
             if (this.notify('beforeCreate') === false)
             {
@@ -3233,9 +3252,8 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
             {
                 this.set('created',ActiveSupport.dateFormat('yyyy-mm-dd HH:MM:ss'));
             }
-            var id = this.get(this.constructor.primaryKeyName);
             ActiveRecord.connection.insertEntity(this.tableName, this.constructor.primaryKeyName, this.toObject());
-            if(!id)
+            if(!this.get(this.constructor.primaryKeyName))
             {
                 this.set(this.constructor.primaryKeyName, ActiveRecord.connection.getLastInsertedRowId());
             }
@@ -3244,17 +3262,18 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
         }
         else
         {
-            ActiveRecord.connection.updateEntity(this.tableName, this.constructor.primaryKeyName, this.get(this.constructor.primaryKeyName), this.toObject());
+            ActiveRecord.connection.updateEntity(this.tableName, this.constructor.primaryKeyName, this._id, this.toObject());
         }
         //apply field out conversions
         for (var key in this.constructor.fields)
         {
             if(!this.constructor.fields[key].primaryKey)
             {
-                //third param is to surpress observers
+                //third param is to suppress observers
                 this.set(key,ActiveRecord.connection.fieldOut(this.constructor.fields[key],this.get(key)),true);
             }
         }
+        this._id = this.get(this.constructor.primaryKeyName);
         Synchronization.triggerSynchronizationNotifications(this,'afterSave');
         this.notify('afterSave');
         return this;
@@ -3266,7 +3285,7 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
      */
     destroy: function destroy()
     {
-        if (!this.get(this.constructor.primaryKeyName))
+        if (this._id === undefined)
         {
             return false;
         }
@@ -3274,7 +3293,7 @@ ActiveSupport.extend(ActiveRecord.InstanceMethods,{
         {
             return false;
         }
-        ActiveRecord.connection.deleteEntity(this.tableName,this.constructor.primaryKeyName,this.get(this.constructor.primaryKeyName));
+        ActiveRecord.connection.deleteEntity(this.tableName,this.constructor.primaryKeyName,this._id);
         Synchronization.triggerSynchronizationNotifications(this,'afterDestroy');
         if (this.notify('afterDestroy') === false)
         {
@@ -3359,6 +3378,13 @@ ActiveSupport.extend(ActiveRecord.ClassMethods,{
      *         order: 'id DESC'
      *     });
      *     var users = User.find('SELECT * FROM users ORDER id DESC');
+     *
+     *     // If your primary key is not numeric, find(id) will not work.
+     *     // Use findBy<PrimaryKey>(id) or get(id) instead:
+     *
+     *     var commit = Commit.find('cxfeea6'); // BAD - Will be interpreted as a SQL statement.
+     *     commit = Commit.findById('cxfeea6'); // GOOD
+     *     commit = Commit.get('cxfeea6');      // GOOD
      */
     find: function find(params)
     {
@@ -3444,7 +3470,7 @@ ActiveSupport.extend(ActiveRecord.ClassMethods,{
         }
         else
         {
-            var instance = this.find(id);
+            var instance = this.get(id);
             if(!instance)
             {
                 return false;
@@ -3501,7 +3527,7 @@ ActiveSupport.extend(ActiveRecord.ClassMethods,{
     update: function update(id, attributes)
     {
         //array of ids and array of attributes passed in
-        if(typeof(id.length) !== 'undefined')
+        if (ActiveSupport.isArray(id))
         {
             var results = [];
             for(var i = 0; i < id.length; ++i)
@@ -3512,7 +3538,7 @@ ActiveSupport.extend(ActiveRecord.ClassMethods,{
         }
         else
         {
-            var record = this.find(id);
+            var record = this.get(id);
             if(!record)
             {
                 return false;
@@ -3842,7 +3868,7 @@ Adapters.InstanceMethods = {
     },
     getColumnDefinitionFragmentFromKeyAndColumns: function getColumnDefinitionFragmentFromKeyAndColumns(key,columns)
     {
-        return key + ' ' + ((typeof(columns[key]) === 'object' && typeof(columns[key].type) !== 'undefined') ? columns[key].type : this.getDefaultColumnDefinitionFragmentFromValue(columns[key]));
+        return this.quoteIdentifier(key) + ((typeof(columns[key]) === 'object' && typeof(columns[key].type) !== 'undefined') ? columns[key].type : this.getDefaultColumnDefinitionFragmentFromValue(columns[key]));
     },
     getDefaultColumnDefinitionFragmentFromValue: function getDefaultColumnDefinitionFragmentFromValue(value)
     {
@@ -3863,6 +3889,10 @@ Adapters.InstanceMethods = {
     getDefaultValueFromFieldDefinition: function getDefaultValueFromFieldDefinition(field)
     {
         return field.value ? field.value : Migrations.fieldTypesWithDefaultValues[field.type ? field.type.replace(/\(.*/g,'').toLowerCase() : ''];
+    },
+    quoteIdentifier: function quoteIdentifier(name)
+    {
+      return '"' + name + '"';
     },
     log: function log()
     {
@@ -3887,12 +3917,14 @@ Adapters.SQL = {
         var keys = ActiveSupport.keys(data).sort();
         var values = [];
         var args = [];
+        var quoted_keys = [];
         for(var i = 0; i < keys.length; ++i)
         {
             args.push(data[keys[i]]);
             values.push('?');
+            quoted_keys.push(this.quoteIdentifier(keys[i]));
         }
-        args.unshift("INSERT INTO " + table + " (" + keys.join(',') + ") VALUES (" + values.join(',') + ")");
+        args.unshift("INSERT INTO " + table + " (" + quoted_keys.join(',') + ") VALUES (" + values.join(',') + ")");
         var response = this.executeSQL.apply(this,args);
         var id = data[primary_key_name] || this.getLastInsertedRowId();
         var data_with_id = ActiveSupport.clone(data);
@@ -3910,7 +3942,7 @@ Adapters.SQL = {
             for (var i = 0; i < keys.length; ++i)
             {
                 args.push(updates[keys[i]]);
-                values.push(updates[i] + " = ?");
+                values.push(this.quoteIdentifier(keys[i]) + " = ?");
             }
             updates = values.join(',');
         }
@@ -3925,10 +3957,10 @@ Adapters.SQL = {
         for (var i = 0; i < keys.length; ++i)
         {
             args.push(data[keys[i]]);
-            values.push(keys[i] + " = ?");
+            values.push(this.quoteIdentifier(keys[i]) + " = ?");
         }
         args.push(id);
-        args.unshift("UPDATE " + table + " SET " + values.join(',') + " WHERE " + primary_key_name + " = ?");
+        args.unshift("UPDATE " + table + " SET " + values.join(',') + " WHERE " + this.quoteIdentifier(primary_key_name) + " = ?");
         var response = this.executeSQL.apply(this, args);
         this.notify('updated',table,id,data);
         return response;
@@ -3953,7 +3985,7 @@ Adapters.SQL = {
         {
             args = ["DELETE FROM " + table];
             var ids = [];
-            var ids_result_set = this.executeSQL('SELECT ' + primary_key_name + ' FROM ' + table);
+            var ids_result_set = this.executeSQL('SELECT ' + this.quoteIdentifier(primary_key_name) + ' FROM ' + table);
             if(!ids_result_set)
             {
                 return null;
@@ -3970,7 +4002,7 @@ Adapters.SQL = {
         }
         else
         {
-            args = ["DELETE FROM " + table + " WHERE " + primary_key_name + " = ?",id];
+            args = ["DELETE FROM " + table + " WHERE " + this.quoteIdentifier(primary_key_name) + " = ?",id];
             response = this.executeSQL.apply(this,args);
             this.notify('destroyed',table,id);
             return response;
@@ -3978,7 +4010,7 @@ Adapters.SQL = {
     },
     findEntitiesById: function findEntityById(table, primary_key_name, ids)
     {
-        var response = this.executeSQL.apply(this,['SELECT * FROM ' + table + ' WHERE ' + primary_key_name + ' IN (' + ids.join(',') + ')']);
+        var response = this.executeSQL.apply(this,['SELECT * FROM ' + table + ' WHERE ' + this.quoteIdentifier(primary_key_name) + ' IN (' + ids.join(',') + ')']);
         if (!response)
         {
             return false;
@@ -4039,7 +4071,7 @@ Adapters.SQL = {
             keys = ActiveSupport.keys(fragment);
             for(i = 0; i < keys.length; ++i)
             {
-                where += keys[i] + " = ? AND ";
+                where += this.quoteIdentifier(keys[i]) + " = ? AND ";
                 var value;
                 if(typeof(fragment[keys[i]]) === 'number')
                 {
@@ -4122,7 +4154,7 @@ Adapters.SQL = {
         if(Migrations.objectIsFieldDefinition(field))
         {
             //date handling
-            if(field.type.toLowerCase().match(/date/) && typeof(value) == 'string')
+            if(typeof(value) == 'string' && /date/.test(field.type.toLowerCase()))
             {
                 return ActiveSupport.dateFromDateTime(value);
             }
@@ -4143,11 +4175,12 @@ Adapters.SQL = {
         }
         if (typeof(field) === 'number')
         {
-            var trim = function(str)
+            if (typeof(value) === 'number')
             {
-                return String(str).replace(/^\s+|\s+$/g,"");
+                return value;
             };
-            return (trim(value).length > 0 && !(/[^0-9.]/).test(trim(value)) && (/\.\d/).test(trim(value))) ? parseFloat(Number(value)) : parseInt(Number(value),10);
+            var t = ActiveSupport.trim(String(value));
+            return (t.length > 0 && !(/[^0-9.]/).test(t) && (/\.\d/).test(t)) ? parseFloat(Number(value)) : parseInt(Number(value),10);
         }
         //array or object (can come from DB (as string) or coding enviornment (object))
         if ((typeof(value) === 'string' || typeof(value) === 'object') && (typeof(field) === 'object' && (typeof(field.length) !== 'undefined' || typeof(field.type) === 'undefined')))
@@ -4189,7 +4222,7 @@ Adapters.SQLite = ActiveSupport.extend(ActiveSupport.clone(Adapters.SQL),{
             if(columns[key].primaryKey)
             {
                 var type = columns[key].type || 'INTEGER';
-                fragments.unshift(key + ' ' + type + ' PRIMARY KEY');
+                fragments.unshift(this.quoteIdentifier(key) + ' ' + type + ' PRIMARY KEY');
             }
             else
             {
@@ -4344,7 +4377,7 @@ ActiveSupport.extend(Adapters.InMemory.prototype,{
         var response = [];
         for(var i = 0; i < ids.length; ++i)
         {
-            var id = parseInt(ids[i],10);
+            var id = ids[i];
             if(table_data[id])
             {
                 response.push(table_data[id]);
@@ -4378,9 +4411,9 @@ ActiveSupport.extend(Adapters.InMemory.prototype,{
         var table_data = this.storage[table];
         if(params && params.where && params.where.id)
         {
-            if(table_data[parseInt(params.where.id, 10)])
+            if(table_data[params.where.id])
             {
-                entity_array.push(table_data[parseInt(params.where.id, 10)]);
+                entity_array.push(table_data[params.where.id]);
             }
         }
         else
@@ -5602,7 +5635,7 @@ ActiveRecord.ClassMethods.hasOne = function hasOne(related_model_name, options)
         var id = this.get(foreign_key);
         if (id)
         {
-            return ActiveRecord.Models[related_model_name].find(id);
+            return ActiveRecord.Models[related_model_name].get(id);
         }
         else
         {
@@ -5832,7 +5865,7 @@ ActiveRecord.ClassMethods.belongsTo = function belongsTo(related_model_name, opt
         var id = this.get(foreign_key);
         if (id)
         {
-            return ActiveRecord.Models[related_model_name].find(id);
+            return ActiveRecord.Models[related_model_name].get(id);
         }
         else
         {
@@ -6525,8 +6558,8 @@ ActiveRecord.Adapters.MySQL = ActiveSupport.extend(ActiveSupport.clone(ActiveRec
             if(columns[key].primaryKey)
             {
                 var type = columns[key].type || 'INT';
-                fragments.unshift(key + ' ' + type + ' NOT NULL' + (type == 'INT' ? ' AUTO_INCREMENT' : ''));
-                fragments.push('PRIMARY KEY(' + key + ')');
+                fragments.unshift(this.quoteIdentifier(key) + ' ' + type + ' NOT NULL' + (type == 'INT' ? ' AUTO_INCREMENT' : ''));
+                fragments.push('PRIMARY KEY(' + this.quoteIdentifier(key) + ')');
             }
             else
             {
@@ -6537,7 +6570,7 @@ ActiveRecord.Adapters.MySQL = ActiveSupport.extend(ActiveSupport.clone(ActiveRec
     },
     dropColumn: function dropColumn(table_column,column_name)
     {
-        return this.executeSQL('ALTER TABLE ' + table_name + ' DROP COLUMN ' + key);
+        return this.executeSQL('ALTER TABLE ' + table_name + ' DROP COLUMN ' + this.quoteIdentifier(key));
     }
 });
 
@@ -6835,6 +6868,17 @@ var ActiveView = null;
  * The first construct, update(element).from(key) will set the content
  * of the specified element to the value of the specificed key
  * whenever the value of the key changes.
+ *
+ *     update(title_container).from('title');
+ * 
+ * You can update a particular attribute of an element by passing a key
+ * name to update(), or pull a particular key from another object by
+ * passing both an object and a key to from() (that object must however
+ * fire "get" and "set" events like ObservableHash, ActiveRecord or
+ * ActiveView).
+ * 
+ *     update(image_element,'src').from('image_src');
+ *     update(image_element,'src').from(image_active_record,'src');
  * 
  * The second construct is a generic way of observing when a key changes.
  * When "key" changes, the callback function will be called with the
@@ -6885,6 +6929,9 @@ var ActiveView = null;
  *     //instance.container == <ul><li>one</li><li>two</li><li>three</li></ul>
  *     items.pop();
  *     //instance.container == <ul><li>one</li><li>two</li></ul>
+ * 
+ * The collect() method will also accept a function that returns an Element
+ * in place of an ActiveView class.
  * 
  * ActiveRecord Data Binding Integration
  * -------------------------------------
@@ -7050,14 +7097,6 @@ ActiveView.render = function render(content,scope)
     return ActiveSupport.throwError(Errors.InvalidContent);
 };
 
-ActiveView.clearNode = function clearNode(node)
-{
-    while(node.firstChild)
-    {
-        node.removeChild(node.firstChild);
-    }
-};
-
 ActiveView.isActiveViewInstance = function isActiveViewInstance(object)
 {
     return object && object.container && object.container.nodeType == 1 && object.scope && object.builder;
@@ -7154,41 +7193,65 @@ var Errors = {
 };
 
 var Builder = {
+    tags: ('A ABBR ACRONYM ADDRESS APPLET AREA B BASE BASEFONT BDO BIG BLOCKQUOTE BODY ' +
+        'BR BUTTON CAPTION CENTER CITE CODE COL COLGROUP DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET ' +
+        'FONT FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6 HEAD HR HTML I IFRAME IMG INPUT INS ISINDEX '+
+        'KBD LABEL LEGEND LI LINK MAP MENU META NOFRAMES NOSCRIPT OBJECT OL OPTGROUP OPTION P '+
+        'PARAM PRE Q S SAMP SCRIPT SELECT SMALL SPAN STRIKE STRONG STYLE SUB SUP TABLE TBODY TD '+
+        'TEXTAREA TFOOT TH THEAD TITLE TR TT U UL VAR').split(/\s+/),
     ieAttributeTranslations: {
-      'class': 'className',
-      'checked': 'defaultChecked',
-      'usemap': 'useMap',
-      'for': 'htmlFor',
-      'readonly': 'readOnly',
-      'colspan': 'colSpan',
-      'bgcolor': 'bgColor',
-      'cellspacing': 'cellSpacing',
-      'cellpadding': 'cellPadding'
+        'class': 'className',
+        'checked': 'defaultChecked',
+        'usemap': 'useMap',
+        'for': 'htmlFor',
+        'readonly': 'readOnly',
+        'colspan': 'colSpan',
+        'bgcolor': 'bgColor',
+        'cellspacing': 'cellSpacing',
+        'cellpadding': 'cellPadding'
     },
     cache: {},
-    createElement: function createElement(tag,attributes)
+    createElement: function createElement(tag_name,attributes)
     {
         var global_context = ActiveSupport.getGlobalContext();
         var ie = !!(global_context.attachEvent && !global_context.opera);
         attributes = attributes || {};
-        tag = tag.toLowerCase();
+        tag_name = tag_name.toLowerCase();
         var element;
-        if(ie && attributes.name)
+        if(ie && (attributes.name || (tag_name == 'input' && attributes.type)))
         {
-            tag = '<' + tag + ' name="' + attributes.name + '">';
+            //ie needs these attributes to be written in the string passed to createElement
+            tag = '<' + tag_name;
+            if(attributes.name)
+            {
+                tag += ' name="' + attributes.name + '"';
+            }
+            if(tag_name == 'input' && attributes.type)
+            {
+                tag += ' type="' + attributes.type + '"';
+            }
+            tag += '>';
             delete attributes.name;
+            delete attributes.type;
             element = Builder.extendCreatedElement(global_context.document.createElement(tag));
         }
         else
         {
-            if(!Builder.cache[tag])
+            if(!Builder.cache[tag_name])
             {
-                Builder.cache[tag] = Builder.extendCreatedElement(global_context.document.createElement(tag));
+                Builder.cache[tag_name] = Builder.extendCreatedElement(global_context.document.createElement(tag_name));
             }
-            element = Builder.cache[tag].cloneNode(false);
+            element = Builder.cache[tag_name].cloneNode(false);
         }
         Builder.writeAttribute(element,attributes);
         return element;
+    },
+    clearElement: function clearElement(element)
+    {
+        while(element.firstChild)
+        {
+            element.removeChild(element.firstChild);
+        }
     },
     extendCreatedElement: function extendCreatedElement(element)
     {
@@ -7251,16 +7314,10 @@ var Builder = {
 };
 
 Builder.generator = function generator(target,scope){
-    var tags = ("A ABBR ACRONYM ADDRESS APPLET AREA B BASE BASEFONT BDO BIG BLOCKQUOTE BODY " +
-        "BR BUTTON CAPTION CENTER CITE CODE COL COLGROUP DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET " +
-        "FONT FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6 HEAD HR HTML I IFRAME IMG INPUT INS ISINDEX "+
-        "KBD LABEL LEGEND LI LINK MAP MENU META NOFRAMES NOSCRIPT OBJECT OL OPTGROUP OPTION P "+
-        "PARAM PRE Q S SAMP SCRIPT SELECT SMALL SPAN STRIKE STRONG STYLE SUB SUP TABLE TBODY TD "+
-        "TEXTAREA TFOOT TH THEAD TITLE TR TT U UL VAR").split(/\s+/);
     var global_context = ActiveSupport.getGlobalContext();
-    for(var t = 0; t < tags.length; ++t)
+    for(var t = 0; t < Builder.tags.length; ++t)
     {
-        var tag = tags[t];
+        var tag = Builder.tags[t];
         (function tag_iterator(tag){
             target[tag.toLowerCase()] = target[tag] = function tag_generator(){
                 var i, argument, attributes, text_nodes, elements, element;
@@ -7301,7 +7358,14 @@ Builder.generator = function generator(target,scope){
                 element = Builder.createElement(tag,attributes);
                 for(i = 0; i < elements.length; ++i)
                 {
-                    element.appendChild((elements[i] && elements[i].nodeType === 1) ? elements[i] : global_context.document.createTextNode(String(elements[i])));
+                    if(elements[i] && elements[i].nodeType === 1)
+                    {
+                        element.appendChild(elements[i]);
+                    }
+                    else
+                    {
+                        element.appendChild(global_context.document.createTextNode(String(elements[i])));
+                    }
                 }
                 return element;
             };
@@ -7327,6 +7391,11 @@ ActiveView.generateBinding = function generateBinding(instance)
         if(!element || !element.nodeType === 1)
         {
             return ActiveSupport.throwError(Errors.MismatchedArguments,'expected Element, recieved ',typeof(element),element);
+        }
+        var attribute = false;
+        if(arguments[1] && typeof(arguments[1]) == 'string')
+        {
+            attribute = arguments[1];
         }
         return {
             from: function from(observe_key)
@@ -7372,8 +7441,27 @@ ActiveView.generateBinding = function generateBinding(instance)
                     {
                         if(condition())
                         {
-                            ActiveView.clearNode(element);
-                            element.appendChild(ActiveSupport.getGlobalContext().document.createTextNode(transformation ? transformation(value) : value));
+                            var formatted_value = transformation ? transformation(value) : value;
+                            if(attribute)
+                            {
+                                ActiveView.Builder.writeAttribute(element,attribute,formatted_value);
+                            }
+                            else
+                            {
+                                ActiveView.Builder.clearElement(element);
+                                if(formatted_value && formatted_value.nodeType === 1)
+                                {
+                                    element.appendChild(formatted_value);
+                                }
+                                else if(typeof(formatted_value) == 'string' || typeof(formatted_value) == 'number' || typeof(formatted_value) == 'boolean')
+                                {
+                                    element.appendChild(ActiveSupport.getGlobalContext().document.createTextNode(String(formatted_value)));
+                                }
+                                else
+                                {
+                                    return ActiveSupport.throwError(Errors.MismatchedArguments,'expected Element or string in update binding observer, recieved ',typeof(element),element);
+                                }
+                            }
                         }
                     }
                 });
@@ -7413,7 +7501,7 @@ ActiveView.generateBinding = function generateBinding(instance)
                             instance.scope.observe('set',function collection_key_change_observer(key,value){
                                 if(key == collection_name)
                                 {
-                                    ActiveView.clearNode(element);
+                                    ActiveView.Builder.clearElement(element);
                                     instance.binding.collect(view).from(value).into(element);
                                 }
                             });
@@ -7762,7 +7850,7 @@ var InstanceMethods = (function(){
             if(this.layout && !this.layoutRendered && typeof(this.layout) == 'function')
             {
                 this.layoutRendered = true;
-                ActiveView.clearNode(this.container);
+                ActiveView.Builder.clearElement(this.container);
                 this.container.appendChild(this.layout.bind(this)());
             }
         }
@@ -7789,7 +7877,7 @@ var RenderFlags = {
         var container = params.target || this.getRenderTarget();
         if(container)
         {
-            ActiveView.clearNode(container);
+            ActiveView.Builder.clearElement(container);
             container.appendChild(response);
         }
     },
