@@ -25,16 +25,25 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
-var Errors = {
-    NoPathInRoute: ActiveSupport.createError('No path was specified in the route'),
-    NoObjectInRoute: ActiveSupport.createError('No :object was specified in the route: '),
-    NoMethodInRoute: ActiveSupport.createError('No :method was specified in the route: '),
-    ObjectDoesNotExist: ActiveSupport.createError('The following object does not exist: '),
-    MethodDoesNotExist: ActiveSupport.createError('The following method does not exist: '),
-    MethodNotCallable: ActiveSupport.createError('The following method is not callable: '),
-    NamedRouteDoesNotExist: ActiveSupport.createError('The following named route does not exist: '),
-    UnresolvableUrl: ActiveSupport.createError('Could not resolve the url: '),
-    ObjectNotInRouteSet: ActiveSupport.createError('The passed object does not exist in the route set:'),
-    ReverseLookupFailed: ActiveSupport.createError('A route could not be found that corresponds to the following object:')
+var Layout = {
+    create: function create(structure,methods)
+    {
+        var view_class = ActiveView.create(structure,methods)
+        ActiveSupport.extend(view_class.prototype,Layout.InstanceMethods);
+        return view_class;
+    }
 };
-ActiveRoutes.Errors = Errors;
+
+Layout.InstanceMethods = {
+    setTarget: function setTarget(target)
+    {
+        this._target = target;
+        return target;
+    },
+    getTarget: function getTarget()
+    {
+        return this._target;
+    }
+};
+
+ActiveView.Layout = Layout;

@@ -53,6 +53,7 @@
             "src/active_record/adapters/auto.js",
             "src/active_record/where_parser.js",
             "src/active_record/finders.js",
+            "src/active_record/indicies.js",
             "src/active_record/result_set.js",
             "src/active_record/relationships.js",
             "src/active_record/relationships/has_one.js",
@@ -71,6 +72,7 @@
             "src/active_view/main.js",
             "src/active_view/builder.js",
             "src/active_view/binding.js",
+            "src/active_view/layout.js",
             "src/active_view/template.js",
             "src/active_view/footer.js"
         ]
@@ -80,8 +82,26 @@
         "build": [
             "src/active_controller/header.js",
             "src/active_controller/main.js",
-            "src/active_controller/history.js",
+            "src/active_controller/routes.js",
             "src/active_controller/footer.js"
+        ]
+    },
+    {
+        "name": "include_active_support",
+        "build": [
+            "src/active_support/header.js",
+            "src/active_support/main.js",
+            "src/active_support/inflector.js",
+            "src/active_support/date.js",
+            "src/active_support/json.js",
+            "src/active_support/footer.js"
+        ]
+    },
+    {
+        "name": "include_swfaddress",
+        "build": [
+            "lib/swfaddress.js",
+            "src/active_controller/adapters/swfaddress.js"
         ]
     },
     
@@ -90,7 +110,7 @@
         "output": "latest/active_support.js",
         "files": [
             "license.txt",
-            "src/active_support.js"
+            "include_active_support"
         ]
     },
     {
@@ -104,11 +124,31 @@
     },
     
     {
+        "name": "active_support_core",
+        "output": "latest/active_support.core.js",
+        "files": [
+            "license.txt",
+            "src/active_support/header.js",
+            "src/active_support/main.js",
+            "src/active_support/footer.js"
+        ]
+    },
+    {
+        "name": "active_support_core_packed",
+        "output": "latest/active_support.core.packed.js",
+        "compress": true,
+        "compress_prepend": "license.txt",
+        "files": [
+            "latest/active_support.core.js"
+        ]
+    },
+    
+    {
         "name": "active_event",
         "output": "latest/active_event.js",
         "files": [
             "license.txt",
-            "src/active_support.js",
+            "include_active_support",
             "src/active_event.js"
         ]
     },
@@ -127,7 +167,7 @@
         "output": "latest/active_routes.js",
         "files": [
             "license.txt",
-            "src/active_support.js",
+            "include_active_support",
             "src/active_event.js",
             "include_active_routes"
         ]
@@ -146,7 +186,7 @@
         "output": "latest/active_record.js",
         "files": [
             "license.txt",
-            "src/active_support.js",
+            "include_active_support",
             "src/active_event.js",
             "include_active_record",
             "src/active_record/adapters/gears.js"
@@ -167,7 +207,7 @@
         "output": "latest/active_record.jaxer.js",
         "files": [
             "license.txt",
-            "src/active_support.js",
+            "include_active_support",
             "src/active_event.js",
             "include_active_record",
             "src/active_record/adapters/support/mysql.js",
@@ -203,7 +243,7 @@
         "output": "latest/active_record.air.js",
         "files": [
             "license.txt",
-            "src/active_support.js",
+            "include_active_support",
             "src/active_event.js",
             "include_active_record",
             "src/active_record/adapters/air.js"
@@ -224,13 +264,14 @@
         "output": "latest/active.js",
         "files": [
             "license.txt",
-            "src/active_support.js",
+            "include_active_support",
             "src/active_event.js",
             "include_active_routes",
             "include_active_record",
             "src/active_record/adapters/gears.js",
             "include_active_view",
-            "include_active_controller"
+            "include_active_controller",
+            "include_swfaddress"
         ]
     },
     {
@@ -248,7 +289,7 @@
         "output": "latest/active.jaxer.js",
         "files": [
             "license.txt",
-            "src/active_support.js",
+            "include_active_support",
             "src/active_event.js",
             "include_active_routes",
             "include_active_record",
@@ -257,7 +298,7 @@
             "src/active_record/adapters/jaxer_mysql.js",
             "include_active_view",
             "include_active_controller",
-            "src/active_controller/server.js",
+            "src/active_controller/adapters/server.js",
             "src/active_controller/adapters/jaxer.js"
         ]
     },
@@ -277,7 +318,7 @@
         "output": "latest/active.air.js",
         "files": [
             "license.txt",
-            "src/active_support.js",
+            "include_active_support",
             "src/active_event.js",
             "include_active_routes",
             "include_active_record",
@@ -310,6 +351,7 @@
             "test/active_record/date.js",
             "test/active_record/finders.js",
             "test/active_record/id.js",
+            "test/active_record/indicies.js",
             "test/active_record/migrations.js",
             "test/active_record/relationships.js",
             "test/active_record/serialization.js",
