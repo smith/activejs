@@ -25,16 +25,26 @@
  * 
  * ***** END LICENSE BLOCK ***** */
 
-var Errors = {
-    NoPathInRoute: ActiveSupport.createError('No path was specified in the route'),
-    NoObjectInRoute: ActiveSupport.createError('No :object was specified in the route: '),
-    NoMethodInRoute: ActiveSupport.createError('No :method was specified in the route: '),
-    ObjectDoesNotExist: ActiveSupport.createError('The following object does not exist: '),
-    MethodDoesNotExist: ActiveSupport.createError('The following method does not exist: '),
-    MethodNotCallable: ActiveSupport.createError('The following method is not callable: '),
-    NamedRouteDoesNotExist: ActiveSupport.createError('The following named route does not exist: '),
-    UnresolvableUrl: ActiveSupport.createError('Could not resolve the url: '),
-    ObjectNotInRouteSet: ActiveSupport.createError('The passed object does not exist in the route set:'),
-    ReverseLookupFailed: ActiveSupport.createError('A route could not be found that corresponds to the following object:')
+ActiveController.routes = false;
+
+ActiveController.setRoutes = function setRoutes(route_set)
+{
+    ActiveController.routes = route_set;
 };
-ActiveRoutes.Errors = Errors;
+
+ActiveController.setRoute = function setRoute(klass,action_name,params)
+{
+    if(ActiveController.routes)
+    {
+        var route = ActiveController.routes.reverseLookup(klass,action_name);
+        if(route)
+        {
+            var final_route = ActiveSupport.clone(route);
+            //need to deep copy the params
+            final_route.params = ActiveSupport.clone(route.params);
+            ActiveSupport.extend(final_route.params,params || {});
+            //dispatch the route, but surpress the actual dispatcher
+            ActiveController.routes.dispatch(final_route,true);
+        }
+    }
+};

@@ -31,17 +31,41 @@
  * @property {ActiveRecord.Adapter}
  */
 Adapters.InMemory = function InMemory(storage){
-    this.storage = typeof(storage) === 'string' ? ActiveSupport.JSON.parse(storage) : (storage || {});
     this.lastInsertId = null;
+    this.setStorage(storage);
 };
 
 ActiveSupport.extend(Adapters.InMemory.prototype,Adapters.InstanceMethods);
 
 ActiveSupport.extend(Adapters.InMemory.prototype,{
     schemaLess: true,
-    entityMissing: function entityMissing(id){
+    entityMissing: function entityMissing(id)
+    {
         return {};
     },
+    /**
+     * @alias ActiveRecord.connection.setStorage
+     * @param {Object} storage
+     * Only for use with the InMemory adapter.
+     * 
+     * Sets the storage (in memory database hash) affter connect() has been called.
+     * 
+     *     ActiveRecord.connect(ActiveRecord.Adapters.InMemory);
+     *     ActiveRecord.connection.setStorage({my_table:{...}});
+     */
+    setStorage: function setStorage(storage)
+    {
+        this.storage = typeof(storage) === 'string' ? ActiveSupport.JSON.parse(storage) : (storage || {});
+        ActiveRecord.Indicies.initializeIndicies(this.storage);
+    },
+    /**
+     * @alias ActiveRecord.connection.serialize
+     * @return {String} json
+     * Only for use with the InMemory adapter.
+     *
+     * Returns a JSON representation of the storage hash that the InMemory adapter
+     * uses.
+     */
     serialize: function serialize()
     {
         return ActiveSupport.JSON.stringify(this.storage);
@@ -211,6 +235,10 @@ ActiveSupport.extend(Adapters.InMemory.prototype,{
         {
             filters.push(this.createWhere(params.where));
         }
+        if(params && params.callback)
+        {
+            filters.push(this.createCallback(params.callback));
+        }
         if(params && params.order)
         {
             filters.push(this.createOrderBy(params.order));
@@ -355,6 +383,21 @@ ActiveSupport.extend(Adapters.InMemory.prototype,{
             };
         }
     },
+    createCallback: function createCallback(callback)
+    {
+        return function json_result_callback_processor(result_set)
+        {
+            var response = [];
+            for(var i = 0; i < result_set.length; ++i)
+            {
+                if(callback(result_set[i]))
+                {
+                    response.push(result_set[i]);
+                }
+            }
+            return response;
+        };
+    },
     createLimit: function createLimit(limit,offset)
     {
         return function json_result_limit_processor(result_set)
@@ -487,7 +530,7 @@ Adapters.InMemory.method_call_handler = function method_call_handler(name,row,ar
     }
     if(!Adapters.InMemory.MethodCallbacks[name])
     {
-        return ActiveSupport.throwError(Errors.MethodDoesNotExist);
+        return ActiveSupport.throwError(Errors.MethodDoesNotExist,'"' + name + '"' + ' was called from a sql statement.');
     }
     else
     {

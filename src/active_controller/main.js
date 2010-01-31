@@ -39,18 +39,9 @@ ActiveController.logging = false;
 
 ActiveController.create = function create(actions,methods)
 {
-    var klass = function klass(container,parent,params){
-        this.container = container;
-        this.setRenderTarget(this.container);
-        this.parent = parent;
-        this.children = [];
-        this.history = ActiveSupport.clone(ActiveController.History);
-        this.history.callActionAtIndex = ActiveSupport.bind(this.history.callActionAtIndex,this);
-        this.params = params || {};
-        this.scope = new ActiveEvent.ObservableHash({});
-        this.initialize();
-    };
+    var klass = {};
     ActiveSupport.extend(klass,ClassMethods);
+    klass.reset();
     for(var action_name in actions || {})
     {
         if(typeof(actions[action_name]) == 'function')
@@ -60,13 +51,35 @@ ActiveController.create = function create(actions,methods)
         else
         {
             //plain old property
-            klass.prototype[action_name] = actions[action_name];
+            klass[action_name] = actions[action_name];
         }
     }
-    ActiveSupport.extend(klass.prototype,InstanceMethods);
-    ActiveSupport.extend(klass.prototype,methods || {});
+    ActiveSupport.extend(klass,methods || {});
     ActiveEvent.extend(klass);
     return klass;
+};
+
+ActiveController.createAction = function createAction(klass,action_name,action)
+{
+    klass[action_name] = function action_wrapper(){
+        if(arguments[0] && typeof(arguments[0]) == 'object')
+        {
+            this.params = arguments[0];
+        }
+        var suppress_routes = (arguments.length == 2 && arguments[1] === false);
+        this.notify('beforeCall',action_name,this.params);
+        if(!this.setupComplete)
+        {
+            this.setup();
+        }
+        this.renderLayout();
+        if(ActiveController.routes && !suppress_routes)
+        {
+            ActiveController.setRoute(klass,action_name,this.params);
+        }
+        ActiveSupport.bind(action,this)();
+        this.notify('afterCall',action_name,this.params);
+    };
 };
 
 ActiveController.createDefaultContainer = function createDefaultContainer()
@@ -81,26 +94,39 @@ ActiveController.createDefaultContainer = function createDefaultContainer()
     return div;
 };
 
-ActiveController.createAction = function createAction(klass,action_name,action)
-{
-    klass.prototype[action_name] = function action_wrapper(){
-        if(arguments[0] && typeof(arguments[0]) == 'object')
-        {
-            this.params = arguments[0];
-        }
-        this.notify('beforeCall',action_name,this.params);
-        this.renderLayout();
-        ActiveSupport.bind(action,this)();
-        this.history.history.push([action_name,this.params]);
-        this.notify('afterCall',action_name,this.params);
-    };
-};
-
-var InstanceMethods = (function(){
+var ClassMethods = (function(){
     return {
-        initialize: function initialize()
+        reset: function reset()
         {
-        
+            this.setupComplete = false;
+            this.params = {};
+            this.scope = new ActiveEvent.ObservableHash({});
+            this.container = false;
+        },
+        setup: function setup(container,params)
+        {
+            if(container)
+            {
+                this.container = container;
+            }
+            else
+            {
+                this.container = this.getContainer();
+            }
+            this.setRenderTarget(this.container);
+            if(this.params)
+            {
+                ActiveSupport.extend(this.params,params);
+            }
+            if(this.initialize)
+            {
+                this.initialize();
+            }
+            this.setupComplete = true;
+        },
+        getContainer: function getContainer()
+        {
+            return ActiveController.createDefaultContainer();
         },
         get: function get(key)
         {
@@ -140,16 +166,27 @@ var InstanceMethods = (function(){
         },
         renderLayout: function renderLayout()
         {
-            if(this.layout && !this.layoutRendered && typeof(this.layout) == 'function')
+            if(this.layout && !this.layoutInstance)
             {
-                this.layoutRendered = true;
+                if(!ActiveView.isActiveViewClass(this.layout))
+                {
+                    return ActiveSupport.throwError(Errors.LayoutIsNotActiveViewClass,this.container);
+                }
+                this.layout.prototype.originalStructure = this.layout.prototype.structure;
+                this.layout.prototype.structure = ActiveSupport.curry(this.layout.prototype.originalStructure,this);
+                this.layoutInstance = new this.layout();
+                this.setRenderTarget(this.layoutInstance.getTarget());
                 ActiveView.Builder.clearElement(this.container);
-                this.container.appendChild(this.layout.bind(this)());
+                this.container.appendChild(this.layoutInstance.container);
             }
+        },
+        createAction: function createAction(action_name,action)
+        {
+            return ActiveController.createAction(this,action_name,action);
         }
     };
 })();
-ActiveController.InstanceMethods = InstanceMethods;
+ActiveController.ClassMethods = ClassMethods;
 
 var RenderFlags = {
     view: function view(view_class,params)
@@ -193,18 +230,11 @@ var RenderFlags = {
 };
 ActiveController.RenderFlags = RenderFlags;
 
-var ClassMethods = {
-    createAction: function wrapAction(action_name,action)
-    {
-        return ActiveController.createAction(this,action_name,action);
-    }
-};
-ActiveController.ClassMethods = ClassMethods;
-
 var Errors = {
     BodyNotAvailable: ActiveSupport.createError('Controller could not attach to a DOM element, no container was passed and document.body is not available'),
     InvalidRenderParams: ActiveSupport.createError('The parameter passed to render() was not an object.'),
     UnknownRenderFlag: ActiveSupport.createError('The following render flag does not exist: '),
-    ViewDoesNotExist: ActiveSupport.createError('The specified view does not exist: ')
+    ViewDoesNotExist: ActiveSupport.createError('The specified view does not exist: '),
+    LayoutIsNotActiveViewClass: ActiveSupport.createError('The layout defined by the controller is not an ActiveView class:')
 };
 ActiveController.Errors = Errors;
